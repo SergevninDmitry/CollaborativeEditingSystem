@@ -10,6 +10,10 @@ load_dotenv(find_dotenv())
 class Settings:
     HOST: str = os.environ.get("HOST")
     PORT: int = int(os.environ.get("FAST_API_PORT", 8000))
+    DATABASE_URL: str = os.environ.get(
+        "DATABASE_URL",
+        "sqlite+aiosqlite:///./app.db"
+    )
 
 
 def setup_logging() -> None:

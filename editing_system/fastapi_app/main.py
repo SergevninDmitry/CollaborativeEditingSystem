@@ -5,6 +5,10 @@ from editing_system.fastapi_app.api.routers import (
     users
 )
 
+from editing_system.fastapi_app.db.base import Base
+from editing_system.fastapi_app.db.session import engine
+
+
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -25,3 +29,9 @@ def create_app() -> FastAPI:
 
 setup_logging()
 app = create_app()
+
+
+@app.on_event("startup")
+async def startup():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
