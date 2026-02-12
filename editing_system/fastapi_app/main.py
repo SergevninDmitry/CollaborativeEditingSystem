@@ -2,12 +2,11 @@ from fastapi import FastAPI
 from editing_system.fastapi_app.config import setup_logging
 from editing_system.fastapi_app.api.routers import (
     health,
-    users
+    users,
+    auth
 )
-
 from editing_system.fastapi_app.db.base import Base
 from editing_system.fastapi_app.db.session import engine
-
 
 
 def create_app() -> FastAPI:
@@ -17,8 +16,9 @@ def create_app() -> FastAPI:
     )
 
     routers = [
-        (health.router, "/api/health"),
-        (users.router, "/api/users")
+        (health.router, "/health"),
+        (users.router, "/users"),
+        (auth.router, "/auth")
     ]
 
     for router, prefix in routers:

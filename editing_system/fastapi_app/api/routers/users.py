@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from uuid import UUID
 
 from editing_system.fastapi_app.db.schemas import UserCreate, UserResponse
-from editing_system.fastapi_app.dependencies import get_user_service
+from editing_system.fastapi_app.dependencies import get_user_service, get_current_user
 from editing_system.fastapi_app.services.user_service import (
     UserService,
     EmailAlreadyExists,
@@ -25,6 +25,19 @@ async def create_user(
         )
 
 
+@router.get("/me", response_model=UserResponse)
+async def get_me(
+        user_id: str = Depends(get_current_user),
+        service: UserService = Depends(get_user_service),
+):
+    user = await service.get_user(user_id)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return user
+
+
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
         user_id: UUID,
@@ -40,6 +53,7 @@ async def get_user(
 
 @router.get("/debug/all", response_model=list[UserResponse])
 async def get_all_users(
+        user_id: str = Depends(get_current_user),
         service: UserService = Depends(get_user_service),
 ):
     return await service.get_all_users()
