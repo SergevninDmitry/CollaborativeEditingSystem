@@ -1,0 +1,39 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ===== Virtual environments =====
+venv/
+.env/
+.env.local
+.venv/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===== Logs =====
+*.log
+
+# ===== Tests =====
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ===== Streamlit =====
+.streamlit/secrets.toml
+
+# ===== FastAPI =====
+instance/
+*.db
+*.sqlite3
+
+# ===== Docker =====
+docker-compose.override.yml
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
