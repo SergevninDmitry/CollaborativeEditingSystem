@@ -1,7 +1,6 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
-from uuid import uuid4, UUID
-
+from uuid import uuid4
 from editing_system.fastapi_app.db.base import Base
 
 

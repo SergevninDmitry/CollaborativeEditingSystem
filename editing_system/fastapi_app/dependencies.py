@@ -1,18 +1,20 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from editing_system.fastapi_app.db.session import get_session
-from editing_system.fastapi_app.services.user_service import UserService
+from editing_system.fastapi_app.services import (
+    UserService,
+    DocumentService
+)
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 
 from editing_system.fastapi_app.config import settings
 
-
 security = HTTPBearer()
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+        credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
     token = credentials.credentials
 
@@ -41,6 +43,12 @@ async def get_current_user(
 
 
 async def get_user_service(
-    db: AsyncSession = Depends(get_session),
+        db: AsyncSession = Depends(get_session),
 ) -> UserService:
     return UserService(db)
+
+
+async def get_document_service(
+        db: AsyncSession = Depends(get_session),
+) -> DocumentService:
+    return DocumentService(db)

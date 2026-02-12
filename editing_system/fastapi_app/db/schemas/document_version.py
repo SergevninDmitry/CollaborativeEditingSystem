@@ -3,15 +3,15 @@ from datetime import datetime
 from uuid import UUID
 
 
-class DocumentCreate(BaseModel):
-    title: str
+class DocumentVersionCreate(BaseModel):
     content: str
 
 
-class DocumentResponse(BaseModel):
+class DocumentVersionResponse(BaseModel):
     id: UUID
-    title: str
-    owner_id: UUID
+    document_id: UUID
+    content: str
+    created_by: UUID
     created_at: datetime
 
     class Config:

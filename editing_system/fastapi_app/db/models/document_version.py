@@ -1,12 +1,12 @@
-from sqlalchemy import String, ForeignKey, DateTime
+from sqlalchemy import String, ForeignKey, DateTime, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 from uuid import uuid4
 from editing_system.fastapi_app.db.base import Base
 
 
-class Document(Base):
-    __tablename__ = "documents"
+class DocumentVersion(Base):
+    __tablename__ = "document_versions"
 
     id: Mapped[str] = mapped_column(
         String(36),
@@ -14,12 +14,17 @@ class Document(Base):
         default=lambda: str(uuid4())
     )
 
-    title: Mapped[str] = mapped_column(String(255))
-
-    owner_id: Mapped[str] = mapped_column(
+    document_id: Mapped[str] = mapped_column(
         String(36),
-        ForeignKey("users.id"),
+        ForeignKey("documents.id"),
         index=True
+    )
+
+    content: Mapped[str] = mapped_column(Text)
+
+    created_by: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("users.id")
     )
 
     created_at: Mapped[datetime] = mapped_column(
