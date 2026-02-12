@@ -36,8 +36,16 @@ def main():
         url_path="editor"
     )
 
+    documents_page = st.Page(
+        "pages/documents.py",
+        title="Documents",
+        icon="📝",
+        url_path="documents"
+    )
+
     pg = st.navigation([welcome_page,
                         login_page,
+                        documents_page,
                         editor_page
     ])
 

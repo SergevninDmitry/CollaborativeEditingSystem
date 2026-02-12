@@ -74,7 +74,7 @@ class APIClient:
 
     def create_document(self, title: str, content: str):
         response = requests.post(
-            f"{self.api_url}/documents",
+            f"{self.api_url}/documents/",
             headers=self.get_headers(),
             json={
                 "title": title,
@@ -87,14 +87,18 @@ class APIClient:
 
         return response.json()
 
-    def add_version(self, document_id: str, content: str):
+    def add_version(self, document_id: str, content: str, base_version_id: str):
         response = requests.post(
             f"{self.api_url}/documents/{document_id}/versions",
             headers=self.get_headers(),
             json={
-                "content": content
+                "content": content,
+                "base_version_id": base_version_id,
             }
         )
+
+        if response.status_code == 409:
+            raise Exception("Conflict")
 
         if response.status_code != 200:
             raise Exception("Failed to save version")

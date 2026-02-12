@@ -16,9 +16,9 @@ def require_auth():
         st.error("You must login first.")
         st.stop()
 
-    try:
-        user = api_client.get_current_user()
-        st.session_state.user_email = user["email"]
-
-    except Exception:
-        logout()
+    # try:
+    #     user = api_client.get_current_user()
+    #     st.session_state.user_email = user["email"]
+    #
+    # except Exception:
+    #     logout()

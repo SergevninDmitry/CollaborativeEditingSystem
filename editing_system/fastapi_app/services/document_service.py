@@ -9,7 +9,9 @@ from editing_system.fastapi_app.db.models import (
 from editing_system.fastapi_app.db.schemas import (
     DocumentCreate,
 )
-
+from sqlalchemy import desc
+from fastapi import HTTPException, status
+from uuid import UUID
 
 class DocumentNotFound(Exception):
     pass
@@ -59,18 +61,45 @@ class DocumentService:
 
         return document
 
-    async def add_version(self, document_id: str, content: str, user_id: str):
-        version = DocumentVersion(
+    async def add_version(
+            self,
+            document_id: str,
+            content: str,
+            user_id: str,
+            base_version_id: UUID,
+    ):
+        # получаем последнюю версию
+        result = await self.db.execute(
+            select(DocumentVersion)
+            .where(DocumentVersion.document_id == document_id)
+            .order_by(desc(DocumentVersion.created_at))
+            .limit(1)
+        )
+
+        latest_version = result.scalar_one_or_none()
+        # print("----- ADD VERSION DEBUG -----")
+        # print("LATEST VERSION ID:", latest_version.id if latest_version else None)
+        # print("BASE VERSION ID:", base_version_id)
+        # print("MATCH:", str(latest_version.id) == str(base_version_id) if latest_version else None)
+        # print("--------------------------------")
+        # если версия устарела → конфликт
+        if latest_version and str(latest_version.id) != str(base_version_id):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Document was modified by another user",
+            )
+
+        new_version = DocumentVersion(
             document_id=document_id,
             content=content,
             created_by=user_id,
         )
 
-        self.db.add(version)
+        self.db.add(new_version)
         await self.db.commit()
-        await self.db.refresh(version)
+        await self.db.refresh(new_version)
 
-        return version
+        return new_version
 
     async def get_versions(self, document_id: str):
         result = await self.db.execute(

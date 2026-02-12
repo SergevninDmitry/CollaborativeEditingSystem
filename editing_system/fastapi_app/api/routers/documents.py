@@ -11,11 +11,14 @@ from editing_system.fastapi_app.db.schemas import (
     DocumentResponse,
     DocumentVersionCreate,
     DocumentVersionResponse,
+    AddVersionRequest
 )
 from editing_system.fastapi_app.dependencies import (
     get_current_user,
     get_document_service
 )
+import logging
+
 
 router = APIRouter(tags=["Documents"])
 
@@ -56,18 +59,27 @@ async def get_document(
         raise HTTPException(status_code=404, detail="Document not found")
 
 
-@router.post("/{document_id}/versions", response_model=DocumentVersionResponse)
+@router.post("/{document_id}/versions")
 async def add_version(
         document_id: UUID,
-        data: DocumentVersionCreate,
+        data: AddVersionRequest,
         user_id: str = Depends(get_current_user),
         service: DocumentService = Depends(get_document_service),
 ):
-    return await service.add_version(
-        str(document_id),
-        data.content,
-        user_id,
-    )
+    try:
+        version = await service.add_version(
+            str(document_id),
+            data.content,
+            user_id,
+            data.base_version_id,
+        )
+        return version
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Document was modified by another user",
+        )
+
 
 
 @router.get("/{document_id}/versions", response_model=List[DocumentVersionResponse])

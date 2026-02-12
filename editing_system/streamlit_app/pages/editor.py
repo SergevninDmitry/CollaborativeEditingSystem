@@ -1,80 +1,99 @@
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 from editing_system.streamlit_app.utils.api_client import api_client
 from editing_system.streamlit_app.utils.auth import require_auth
 
 require_auth()
 
+if "selected_document_id" not in st.session_state:
+    st.warning("No document selected")
+    st.switch_page("pages/documents.py")
+
+
+document_id = st.session_state.selected_document_id
+
 st.title("📝 Document Editor")
 
-documents = api_client.get_documents()
+# Poll every 3 seconds
+st_autorefresh(interval=10000, key="doc_poll")
 
-doc_titles = [doc["title"] for doc in documents]
-doc_map = {doc["title"]: doc for doc in documents}
+versions = api_client.get_versions(document_id)
 
-selected_title = st.selectbox(
-    "Select Document",
-    options=["-- Create New --"] + doc_titles
+latest_version = versions[0] if versions else None
+
+if not latest_version:
+    st.error("No versions found")
+    st.stop()
+
+latest_version_id = latest_version["id"]
+latest_content = latest_version["content"]
+
+if "editing_base_version_id" not in st.session_state:
+    st.session_state.editing_base_version_id = latest_version_id
+
+if "editing_base_content" not in st.session_state:
+    st.session_state.editing_base_content = latest_content
+
+if "editor_content" not in st.session_state:
+    st.session_state.editor_content = latest_content
+
+# Initialize editing state
+if "editing_base_version_id" not in st.session_state:
+    st.session_state.editing_base_version_id = latest_version_id
+    st.session_state.editing_base_content = latest_content
+    st.session_state.editor_content = latest_content
+
+# Auto update only if no local changes
+if (
+    latest_version_id != st.session_state.editing_base_version_id
+    and st.session_state.editor_content == st.session_state.editing_base_content
+):
+    st.session_state.editing_base_version_id = latest_version_id
+    st.session_state.editing_base_content = latest_content
+    st.session_state.editor_content = latest_content
+    st.rerun()
+
+content = st.text_area(
+    "Content",
+    height=400,
+    key="editor_content"
 )
 
-if selected_title == "-- Create New --":
-    st.subheader("Create New Document")
+if st.button("Save New Version"):
+    try:
+        new_version = api_client.add_version(
+            document_id,
+            content,
+            st.session_state.editing_base_version_id
+        )
 
-    new_title = st.text_input("Document Title")
-    new_content = st.text_area("Content", height=300)
+        st.session_state.editing_base_version_id = new_version["id"]
+        st.session_state.editing_base_content = content
 
-    if st.button("Create Document"):
-        if new_title.strip() == "":
-            st.error("Title cannot be empty")
-        else:
-            api_client.create_document(new_title, new_content)
-            st.success("Document created")
-            st.rerun()
-else:
-    document = doc_map[selected_title]
-    document_id = document["id"]
-    versions = api_client.get_versions(document_id)
-
-    latest_version_id = versions[0]["id"] if versions else None
-    latest_content = versions[0]["content"] if versions else ""
-
-    st.subheader(f"Editing: {selected_title}")
-
-    if (
-            "current_document_id" not in st.session_state
-            or st.session_state.current_document_id != document_id
-            or st.session_state.get("latest_version_id") != latest_version_id
-    ):
-        st.session_state.current_document_id = document_id
-        st.session_state.latest_version_id = latest_version_id
-        st.session_state.editor_content = latest_content
-
-    content = st.text_area(
-        "Content",
-        height=400,
-        key="editor_content"
-    )
-
-    if st.button("Save New Version"):
-        api_client.add_version(document_id, content)
+        st.write("Base version after Save:", st.session_state.editing_base_version_id)
+        st.write("Latest version after Save:", latest_version_id)
         st.success("Version saved")
         st.rerun()
 
-    st.subheader("Version History")
+    except Exception:
+        st.error("Conflict detected! Document was modified by another user.")
 
-    for i, version in enumerate(versions):
-        col1, col2 = st.columns([4, 1])
+st.subheader("Version History")
 
-        with col1:
-            st.write(f"{version['created_at']}")
+for i, version in enumerate(versions):
+    col1, col2 = st.columns([4, 1])
 
-        with col2:
-            if i != 0:
-                if st.button(
-                        "Revert",
-                        key=f"revert_{version['id']}"
-                ):
-                    api_client.revert_version(document_id, version["id"])
-                    st.success("Reverted successfully")
-                    st.rerun()
-            else:
-                st.write("Current")
+    with col1:
+        st.write(version["created_at"])
+
+    with col2:
+        if i == 0:
+            st.write("Current")
+        else:
+            if st.button("Revert", key=f"revert_{version['id']}"):
+                api_client.revert_version(document_id, version["id"])
+                st.success("Reverted")
+                st.rerun()
+
+if st.button("⬅ Back to Documents"):
+    st.switch_page("pages/documents.py")

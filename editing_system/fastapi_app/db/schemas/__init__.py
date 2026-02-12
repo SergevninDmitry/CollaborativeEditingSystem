@@ -1,6 +1,6 @@
 from editing_system.fastapi_app.db.schemas.user import UserCreate, UserResponse
 from editing_system.fastapi_app.db.schemas.auth import LoginRequest, TokenResponse
-from editing_system.fastapi_app.db.schemas.document import DocumentCreate, DocumentResponse
+from editing_system.fastapi_app.db.schemas.document import DocumentCreate, DocumentResponse, AddVersionRequest
 from editing_system.fastapi_app.db.schemas.document_version import DocumentVersionCreate, DocumentVersionResponse
 
 __all__ = [
@@ -11,5 +11,6 @@ __all__ = [
     "DocumentCreate",
     "DocumentResponse",
     "DocumentVersionCreate",
-    "DocumentVersionResponse"
+    "DocumentVersionResponse",
+    "AddVersionRequest"
 ]
