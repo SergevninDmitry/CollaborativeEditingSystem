@@ -17,7 +17,6 @@ from editing_system.fastapi_app.dependencies import (
     get_document_service
 )
 
-
 router = APIRouter(tags=["Documents"])
 
 
@@ -78,3 +77,17 @@ async def get_versions(
         service: DocumentService = Depends(get_document_service),
 ):
     return await service.get_versions(str(document_id))
+
+
+@router.post("/{document_id}/revert/{version_id}", response_model=DocumentVersionResponse)
+async def revert_version(
+        document_id: UUID,
+        version_id: UUID,
+        user_id: str = Depends(get_current_user),
+        service: DocumentService = Depends(get_document_service),
+):
+    return await service.revert_to_version(
+        str(document_id),
+        str(version_id),
+        user_id,
+    )

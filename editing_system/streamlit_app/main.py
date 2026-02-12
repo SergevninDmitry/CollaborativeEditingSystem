@@ -29,8 +29,16 @@ def main():
         url_path="login"
     )
 
+    editor_page = st.Page(
+        "pages/editor.py",
+        title="Editor",
+        icon="📝",
+        url_path="editor"
+    )
+
     pg = st.navigation([welcome_page,
-                        login_page
+                        login_page,
+                        editor_page
     ])
 
     pg.run()

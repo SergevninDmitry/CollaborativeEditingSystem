@@ -61,5 +61,67 @@ class APIClient:
 
         return response.json()
 
+    def get_documents(self):
+        response = requests.get(
+            f"{self.api_url}/documents",
+            headers=self.get_headers()
+        )
+
+        if response.status_code != 200:
+            raise Exception("Failed to fetch documents")
+
+        return response.json()
+
+    def create_document(self, title: str, content: str):
+        response = requests.post(
+            f"{self.api_url}/documents",
+            headers=self.get_headers(),
+            json={
+                "title": title,
+                "content": content
+            }
+        )
+
+        if response.status_code != 201:
+            raise Exception("Failed to create document")
+
+        return response.json()
+
+    def add_version(self, document_id: str, content: str):
+        response = requests.post(
+            f"{self.api_url}/documents/{document_id}/versions",
+            headers=self.get_headers(),
+            json={
+                "content": content
+            }
+        )
+
+        if response.status_code != 200:
+            raise Exception("Failed to save version")
+
+        return response.json()
+
+    def get_versions(self, document_id: str):
+        response = requests.get(
+            f"{self.api_url}/documents/{document_id}/versions",
+            headers=self.get_headers()
+        )
+
+        if response.status_code != 200:
+            raise Exception("Failed to fetch versions")
+
+        return response.json()
+
+    def revert_version(self, document_id: str, version_id: str):
+        response = requests.post(
+            f"{self.api_url}/documents/{document_id}/revert/{version_id}",
+            headers=self.get_headers(),
+        )
+
+        if response.status_code != 200:
+            raise Exception("Failed to revert")
+
+        return response.json()
+
 
 api_client = APIClient()

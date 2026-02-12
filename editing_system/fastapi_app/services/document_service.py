@@ -89,3 +89,25 @@ class DocumentService:
         )
 
         return result.scalars().first()
+
+    async def revert_to_version(self, document_id: str, version_id: str, user_id: str):
+        result = await self.db.execute(
+            select(DocumentVersion).where(DocumentVersion.id == version_id)
+        )
+        version = result.scalar_one_or_none()
+
+        if not version:
+            raise DocumentNotFound()
+
+        # создаём новую версию с тем же content
+        new_version = DocumentVersion(
+            document_id=document_id,
+            content=version.content,
+            created_by=user_id,
+        )
+
+        self.db.add(new_version)
+        await self.db.commit()
+        await self.db.refresh(new_version)
+
+        return new_version
