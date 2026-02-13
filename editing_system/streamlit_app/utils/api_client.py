@@ -63,7 +63,7 @@ class APIClient:
 
     def get_documents(self):
         response = requests.get(
-            f"{self.api_url}/documents",
+            f"{self.api_url}/documents/",
             headers=self.get_headers()
         )
 
@@ -124,6 +124,20 @@ class APIClient:
 
         if response.status_code != 200:
             raise Exception("Failed to revert")
+
+        return response.json()
+
+    def share_document(self, document_id: str, email: str):
+        response = requests.post(
+            f"{self.api_url}/documents/{document_id}/share",
+            headers=self.get_headers(),
+            json={
+                "email": email
+            }
+        )
+
+        if response.status_code != 200:
+            raise Exception("Failed to share document")
 
         return response.json()
 

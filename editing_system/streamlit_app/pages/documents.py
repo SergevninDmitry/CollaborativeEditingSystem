@@ -23,7 +23,6 @@ if st.button("Create Document"):
     else:
         doc = api_client.create_document(new_title, new_content)
         st.session_state.selected_document_id = doc["id"]
-        st.switch_page("pages/editor.py")
 
 st.divider()
 
@@ -34,6 +33,24 @@ if doc_titles:
 
     if st.button("Open Document"):
         st.session_state.selected_document_id = doc_map[selected]["id"]
-        st.switch_page("pages/editor.py")
 else:
     st.info("No documents yet.")
+
+st.subheader("Share Document")
+
+if "selected_document_id" in st.session_state:
+
+    share_email = st.text_input("User email to share with")
+
+    if st.button("Share"):
+        try:
+            api_client.share_document(
+                st.session_state.selected_document_id,
+                share_email
+            )
+            st.success("Document shared successfully")
+        except Exception:
+            st.error("Failed to share document")
+
+if st.button("Go to Editor"):
+    st.switch_page("pages/editor.py")

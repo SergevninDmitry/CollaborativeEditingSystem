@@ -5,45 +5,70 @@ from editing_system.streamlit_app.utils.auth import require_auth
 
 require_auth()
 
+# -----------------------------
+# Document selection check
+# -----------------------------
 if "selected_document_id" not in st.session_state:
     st.warning("No document selected")
     st.switch_page("pages/documents.py")
-
 
 document_id = st.session_state.selected_document_id
 
 st.title("📝 Document Editor")
 
-# Poll every 3 seconds
+# -----------------------------
+# Auto refresh (polling)
+# -----------------------------
 st_autorefresh(interval=10000, key="doc_poll")
 
+# -----------------------------
+# Fetch versions
+# -----------------------------
 versions = api_client.get_versions(document_id)
 
-latest_version = versions[0] if versions else None
-
-if not latest_version:
+if not versions:
     st.error("No versions found")
     st.stop()
 
+latest_version = versions[0]
 latest_version_id = latest_version["id"]
 latest_content = latest_version["content"]
 
-if "editing_base_version_id" not in st.session_state:
+# -----------------------------
+# Apply pending revert BEFORE widget creation
+# -----------------------------
+if "pending_revert_content" in st.session_state:
+    st.session_state.editor_content = st.session_state.pending_revert_content
+    st.session_state.editing_base_content = st.session_state.pending_revert_content
+    st.session_state.editing_base_version_id = st.session_state.pending_revert_version_id
+
+    del st.session_state.pending_revert_content
+    del st.session_state.pending_revert_version_id
+
+# -----------------------------
+# Initialize session state
+# -----------------------------
+if "editor_initialized_for_doc" not in st.session_state or \
+        st.session_state.editor_initialized_for_doc != document_id:
+
+    st.session_state.editor_initialized_for_doc = document_id
     st.session_state.editing_base_version_id = latest_version_id
+    st.session_state.editing_base_content = latest_content
+    st.session_state.editor_content = latest_content
+
+# Ensure keys always exist
+if "editor_content" not in st.session_state:
+    st.session_state.editor_content = latest_content
 
 if "editing_base_content" not in st.session_state:
     st.session_state.editing_base_content = latest_content
 
-if "editor_content" not in st.session_state:
-    st.session_state.editor_content = latest_content
-
-# Initialize editing state
 if "editing_base_version_id" not in st.session_state:
     st.session_state.editing_base_version_id = latest_version_id
-    st.session_state.editing_base_content = latest_content
-    st.session_state.editor_content = latest_content
 
-# Auto update only if no local changes
+# -----------------------------
+# Auto update if no local edits
+# -----------------------------
 if (
     latest_version_id != st.session_state.editing_base_version_id
     and st.session_state.editor_content == st.session_state.editing_base_content
@@ -53,47 +78,81 @@ if (
     st.session_state.editor_content = latest_content
     st.rerun()
 
+
+
+# -----------------------------
+# Editor widget
+# -----------------------------
 content = st.text_area(
     "Content",
     height=400,
     key="editor_content"
 )
 
-if st.button("Save New Version"):
-    try:
-        new_version = api_client.add_version(
-            document_id,
-            content,
-            st.session_state.editing_base_version_id
-        )
+col1, col2, col3 = st.columns([3, 3, 3])
+# -----------------------------
+# Save new version
+# -----------------------------
+with col1:
+    if st.button("Save New Version"):
+        try:
+            new_version = api_client.add_version(
+                document_id,
+                content,
+                st.session_state.editing_base_version_id
+            )
 
-        st.session_state.editing_base_version_id = new_version["id"]
-        st.session_state.editing_base_content = content
+            # update base after successful save
+            st.session_state.editing_base_version_id = new_version["id"]
+            st.session_state.editing_base_content = content
 
-        st.write("Base version after Save:", st.session_state.editing_base_version_id)
-        st.write("Latest version after Save:", latest_version_id)
-        st.success("Version saved")
+            st.success("Version saved")
+            st.rerun()
+
+        except Exception:
+            st.error("Conflict detected! Document was modified by another user.")
+
+with col2:
+    if latest_version_id != st.session_state.editing_base_version_id:
+        st.warning("New version available!")
+with col3:
+    if st.button("Load Latest Version"):
+        st.session_state.pending_revert_content = latest_content
+        st.session_state.pending_revert_version_id = latest_version_id
         st.rerun()
 
-    except Exception:
-        st.error("Conflict detected! Document was modified by another user.")
-
+# -----------------------------
+# Version history
+# -----------------------------
 st.subheader("Version History")
 
-for i, version in enumerate(versions):
-    col1, col2 = st.columns([4, 1])
+for version in versions:
+    col1, col2, col3 = st.columns([3, 2, 1])
 
     with col1:
         st.write(version["created_at"])
 
     with col2:
-        if i == 0:
-            st.write("Current")
+        st.write(version["author_email"])
+
+    with col3:
+        if version["id"] == latest_version_id:
+            st.write("Latest")
         else:
             if st.button("Revert", key=f"revert_{version['id']}"):
-                api_client.revert_version(document_id, version["id"])
+                new_version = api_client.revert_version(
+                    document_id,
+                    version["id"]
+                )
+
+                st.session_state.pending_revert_content = new_version["content"]
+                st.session_state.pending_revert_version_id = new_version["id"]
+
                 st.success("Reverted")
                 st.rerun()
 
+# -----------------------------
+# Back button
+# -----------------------------
 if st.button("⬅ Back to Documents"):
     st.switch_page("pages/documents.py")

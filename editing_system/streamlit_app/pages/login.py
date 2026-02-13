@@ -15,7 +15,6 @@ mode = st.radio(
     ["Login", "Register"]
 )
 
-
 if mode == "Login":
     st.subheader("Login")
     with st.form("login_form"):
@@ -65,10 +64,12 @@ if submit:
     except Exception as e:
         st.error(str(e))
 
-
 if st.session_state.get("access_token"):
     st.sidebar.markdown("---")
     st.sidebar.write(f"Logged in as: {st.session_state.get('user_email')}")
 
     if st.sidebar.button("Logout"):
         logout()
+
+if st.button("Go to select document"):
+    st.switch_page("pages/documents.py")

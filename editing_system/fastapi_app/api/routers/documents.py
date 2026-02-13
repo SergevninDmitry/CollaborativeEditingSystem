@@ -5,20 +5,28 @@ from uuid import UUID
 from editing_system.fastapi_app.services import (
     DocumentService,
     DocumentNotFound,
+    UserService
 )
 from editing_system.fastapi_app.db.schemas import (
     DocumentCreate,
     DocumentResponse,
     DocumentVersionCreate,
     DocumentVersionResponse,
-    AddVersionRequest
+    AddVersionRequest,
+    ShareRequest
 )
 from editing_system.fastapi_app.dependencies import (
     get_current_user,
-    get_document_service
+    get_document_service,
+    get_user_service
 )
-import logging
+from editing_system.fastapi_app.db.models import User
+from sqlalchemy import select
 
+import logging
+import time
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Documents"])
 
@@ -73,13 +81,22 @@ async def add_version(
             user_id,
             data.base_version_id,
         )
+        logger.info(
+            f"[add_version SUCCESS] user={user_id} document={document_id} "
+            f"content={data.content} base_version_id={data.base_version_id}"
+        )
+
         return version
-    except Exception:
+    except Exception as e:
+        logger.error(
+            f"[add_version FAILED] user={user_id} document={document_id} "
+            f"content={data.content} base_version_id={data.base_version_id}"
+            f"error:{e}"
+        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Document was modified by another user",
         )
-
 
 
 @router.get("/{document_id}/versions", response_model=List[DocumentVersionResponse])
@@ -96,10 +113,57 @@ async def revert_version(
         document_id: UUID,
         version_id: UUID,
         user_id: str = Depends(get_current_user),
-        service: DocumentService = Depends(get_document_service),
+        document_service: DocumentService = Depends(get_document_service),
+        user_service: UserService = Depends(get_user_service),
 ):
-    return await service.revert_to_version(
+    start_time = time.time()
+
+    logger.info(
+        f"[REVERT REQUEST] user={user_id} document={document_id} target_version={version_id}"
+    )
+
+    new_version = await document_service.revert_to_version(
         str(document_id),
         str(version_id),
         user_id,
+    )
+
+    # получаем email пользователя
+    user_obj = await user_service.get_user(UUID(user_id))
+    author_email = user_obj.email if user_obj else "unknown"
+
+    duration = round(time.time() - start_time, 4)
+
+    logger.info(
+        f"[REVERT SUCCESS] user={user_id} author_email= {author_email} document={document_id} "
+        f"new_version={new_version.id} duration={duration}s"
+    )
+
+    return {
+        "id": new_version.id,
+        "document_id": new_version.document_id,
+        "content": new_version.content,
+        "created_by": new_version.created_by,
+        "created_at": new_version.created_at,
+        "author_email": author_email
+    }
+
+
+@router.post("/{document_id}/share")
+async def share_document(
+        document_id: UUID,
+        data: ShareRequest,
+        user_id: str = Depends(get_current_user),
+        document_service: DocumentService = Depends(get_document_service),
+        user_service: UserService = Depends(get_user_service),
+):
+    target_user = await user_service.get_user_by_email(data.email)
+
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return await document_service.share_document(
+        str(document_id),
+        user_id,
+        str(target_user.id)
     )

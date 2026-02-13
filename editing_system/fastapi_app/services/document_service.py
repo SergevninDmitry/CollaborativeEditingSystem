@@ -4,7 +4,9 @@ from typing import List
 
 from editing_system.fastapi_app.db.models import (
     Document,
-    DocumentVersion
+    DocumentVersion,
+    User,
+    DocumentShare
 )
 from editing_system.fastapi_app.db.schemas import (
     DocumentCreate,
@@ -44,11 +46,18 @@ class DocumentService:
 
         return document
 
-    async def get_documents(self, owner_id: str) -> List[Document]:
+    async def get_documents(self, user_id: str):
+
         result = await self.db.execute(
-            select(Document).where(Document.owner_id == owner_id)
+            select(Document)
+            .outerjoin(DocumentShare, Document.id == DocumentShare.document_id)
+            .where(
+                (Document.owner_id == user_id)
+                | (DocumentShare.user_id == user_id)
+            )
         )
-        return result.scalars().all()
+
+        return result.scalars().unique().all()
 
     async def get_document(self, document_id: str) -> Document:
         result = await self.db.execute(
@@ -77,12 +86,10 @@ class DocumentService:
         )
 
         latest_version = result.scalar_one_or_none()
-        # print("----- ADD VERSION DEBUG -----")
-        # print("LATEST VERSION ID:", latest_version.id if latest_version else None)
-        # print("BASE VERSION ID:", base_version_id)
-        # print("MATCH:", str(latest_version.id) == str(base_version_id) if latest_version else None)
-        # print("--------------------------------")
-        # если версия устарела → конфликт
+        print("LATEST:", str(latest_version.id))
+        print("BASE:", str(base_version_id))
+        print("EQUAL:", str(latest_version.id) == str(base_version_id))
+
         if latest_version and str(latest_version.id) != str(base_version_id):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -102,13 +109,29 @@ class DocumentService:
         return new_version
 
     async def get_versions(self, document_id: str):
+
         result = await self.db.execute(
-            select(DocumentVersion)
+            select(DocumentVersion, User.email)
+            .join(User, User.id == DocumentVersion.created_by)
             .where(DocumentVersion.document_id == document_id)
             .order_by(desc(DocumentVersion.created_at))
         )
 
-        return result.scalars().all()
+        rows = result.all()
+
+        versions = []
+
+        for version, email in rows:
+            versions.append({
+                "id": version.id,
+                "document_id": version.document_id,
+                "content": version.content,
+                "created_by": version.created_by,
+                "created_at": version.created_at,
+                "author_email": email
+            })
+
+        return versions
 
     async def get_latest_version(self, document_id: str):
         result = await self.db.execute(
@@ -128,7 +151,6 @@ class DocumentService:
         if not version:
             raise DocumentNotFound()
 
-        # создаём новую версию с тем же content
         new_version = DocumentVersion(
             document_id=document_id,
             content=version.content,
@@ -140,3 +162,35 @@ class DocumentService:
         await self.db.refresh(new_version)
 
         return new_version
+
+    async def share_document(
+            self,
+            document_id: str,
+            owner_id: str,
+            target_user_id: str
+    ):
+
+        document = await self.get_document(document_id)
+
+        if document.owner_id != owner_id:
+            raise HTTPException(status_code=403, detail="Not owner")
+
+        result = await self.db.execute(
+            select(DocumentShare).where(
+                DocumentShare.document_id == document_id,
+                DocumentShare.user_id == target_user_id
+            )
+        )
+
+        if result.scalar_one_or_none():
+            return {"message": "Already shared"}
+
+        share = DocumentShare(
+            document_id=document_id,
+            user_id=target_user_id
+        )
+
+        self.db.add(share)
+        await self.db.commit()
+
+        return {"message": "Document shared successfully"}
