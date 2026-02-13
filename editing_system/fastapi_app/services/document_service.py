@@ -14,7 +14,7 @@ from editing_system.fastapi_app.db.schemas import (
 from sqlalchemy import desc
 from fastapi import HTTPException, status
 from uuid import UUID
-
+import difflib
 
 class DocumentNotFound(Exception):
     pass
@@ -106,13 +106,14 @@ class DocumentService:
 
         return new_version
 
-    async def get_versions(self, document_id: UUID):
+    async def get_versions(self, document_id: UUID, limit: int = 8):
 
         result = await self.db.execute(
             select(DocumentVersion, User.email)
             .join(User, User.id == DocumentVersion.created_by)
             .where(DocumentVersion.document_id == document_id)
             .order_by(desc(DocumentVersion.created_at))
+            .limit(limit)
         )
 
         rows = result.all()
@@ -192,3 +193,22 @@ class DocumentService:
         await self.db.commit()
 
         return {"message": "Document shared successfully"}
+
+    async def get_diff(self, document_id: UUID, version_id: UUID):
+
+        versions = await self.get_versions(document_id)
+
+        for i, v in enumerate(versions):
+            if str(v["id"]) == str(version_id) and i + 1 < len(versions):
+                current = v["content"]
+                previous = versions[i + 1]["content"]
+
+                diff = difflib.unified_diff(
+                    previous.splitlines(),
+                    current.splitlines(),
+                    lineterm=""
+                )
+
+                return "\n".join(diff)
+
+        return ""

@@ -102,6 +102,7 @@ async def add_version(
 @router.get("/{document_id}/versions", response_model=List[DocumentVersionResponse])
 async def get_versions(
         document_id: UUID,
+        limit: int = 8,
         user_id: UUID = Depends(get_current_user),
         service: DocumentService = Depends(get_document_service),
 ):
@@ -167,3 +168,17 @@ async def share_document(
         user_id,
         target_user.id
     )
+
+
+@router.get("/{document_id}/diff/{version_id}")
+async def get_diff(
+        document_id: UUID,
+        version_id: UUID,
+        service: DocumentService = Depends(get_document_service),
+):
+    return {
+        "diff": await service.get_diff(
+            document_id,
+            version_id
+        )
+    }

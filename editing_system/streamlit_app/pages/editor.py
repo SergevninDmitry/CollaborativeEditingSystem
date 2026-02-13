@@ -3,6 +3,34 @@ from streamlit_autorefresh import st_autorefresh
 from editing_system.streamlit_app.utils.api_client import api_client
 from editing_system.streamlit_app.utils.auth import require_auth
 
+import html
+
+
+def render_colored_diff(diff_text: str):
+    lines = diff_text.splitlines()
+    html_lines = []
+
+    for line in lines:
+        escaped = html.escape(line)
+
+        if line.startswith("+") and not line.startswith("+++"):
+            html_lines.append(
+                f"<div style='background-color:#d4f8d4;'>{escaped}</div>"
+            )
+        elif line.startswith("-") and not line.startswith("---"):
+            html_lines.append(
+                f"<div style='background-color:#f8d4d4;'>{escaped}</div>"
+            )
+        else:
+            html_lines.append(f"<div>{escaped}</div>")
+
+    st.markdown(
+        "<div style='font-family:monospace'>" +
+        "".join(html_lines) +
+        "</div>",
+        unsafe_allow_html=True
+    )
+
 require_auth()
 
 # -----------------------------
@@ -24,7 +52,7 @@ st_autorefresh(interval=10000, key="doc_poll")
 # -----------------------------
 # Fetch versions
 # -----------------------------
-versions = api_client.get_versions(document_id)
+versions = api_client.get_versions(document_id, limit=8)
 
 if not versions:
     st.error("No versions found")
@@ -127,7 +155,7 @@ with col3:
 st.subheader("Version History")
 
 for version in versions:
-    col1, col2, col3 = st.columns([3, 2, 1])
+    col1, col2, col3, col4 = st.columns([3, 2, 1, 1])
 
     with col1:
         st.write(version["created_at"])
@@ -136,6 +164,14 @@ for version in versions:
         st.write(version["author_email"])
 
     with col3:
+        if st.button("View Changes", key=f"diff_{version['id']}"):
+            diff = api_client.get_diff(
+                document_id,
+                version["id"]
+            )
+            st.session_state.current_diff = diff
+
+    with col4:
         if version["id"] == latest_version_id:
             st.write("Latest")
         else:
@@ -150,6 +186,11 @@ for version in versions:
 
                 st.success("Reverted")
                 st.rerun()
+
+if "current_diff" in st.session_state:
+    st.subheader("Changes")
+    render_colored_diff(st.session_state.current_diff)
+
 
 # -----------------------------
 # Back button

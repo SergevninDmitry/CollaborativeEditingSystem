@@ -105,9 +105,9 @@ class APIClient:
 
         return response.json()
 
-    def get_versions(self, document_id: str):
+    def get_versions(self, document_id: str, limit: int = 8):
         response = requests.get(
-            f"{self.api_url}/documents/{document_id}/versions",
+            f"{self.api_url}/documents/{document_id}/versions?limit={limit}",
             headers=self.get_headers()
         )
 
@@ -170,6 +170,17 @@ class APIClient:
             raise Exception("Failed to change password")
 
         return response.json()
+
+    def get_diff(self, document_id: str, version_id: str):
+        response = requests.get(
+            f"{self.api_url}/documents/{document_id}/diff/{version_id}",
+            headers=self.get_headers()
+        )
+
+        if response.status_code != 200:
+            raise Exception("Failed to fetch diff")
+
+        return response.json()["diff"]
 
 
 api_client = APIClient()
