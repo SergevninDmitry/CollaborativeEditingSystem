@@ -13,14 +13,7 @@ def _pre_hash(password: str) -> str:
 
 
 def hash_password(password: str) -> str:
-    print(">>> HASH_PASSWORD CALLED")
-    print("INPUT:", password)
-
     prepared = _pre_hash(password)
-
-    print("PREPARED:", prepared)
-    print("LENGTH:", len(prepared))
-
     return pwd_context.hash(prepared)
 
 

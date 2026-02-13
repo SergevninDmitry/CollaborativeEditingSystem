@@ -34,7 +34,7 @@ router = APIRouter(tags=["Documents"])
 @router.post("/", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
 async def create_document(
         data: DocumentCreate,
-        user_id: str = Depends(get_current_user),
+        user_id: UUID = Depends(get_current_user),
         service: DocumentService = Depends(get_document_service),
 ):
     document = await service.create_document(data, user_id)
@@ -43,7 +43,7 @@ async def create_document(
 
 @router.get("/", response_model=List[DocumentResponse])
 async def get_documents(
-        user_id: str = Depends(get_current_user),
+        user_id: UUID = Depends(get_current_user),
         service: DocumentService = Depends(get_document_service),
 ):
     return await service.get_documents(user_id)
@@ -52,11 +52,11 @@ async def get_documents(
 @router.get("/{document_id}", response_model=DocumentResponse)
 async def get_document(
         document_id: UUID,
-        user_id: str = Depends(get_current_user),
+        user_id: UUID = Depends(get_current_user),
         service: DocumentService = Depends(get_document_service),
 ):
     try:
-        document = await service.get_document(str(document_id))
+        document = await service.get_document(document_id)
 
         if document.owner_id != user_id:
             raise HTTPException(status_code=403, detail="Forbidden")
@@ -71,12 +71,12 @@ async def get_document(
 async def add_version(
         document_id: UUID,
         data: AddVersionRequest,
-        user_id: str = Depends(get_current_user),
+        user_id: UUID = Depends(get_current_user),
         service: DocumentService = Depends(get_document_service),
 ):
     try:
         version = await service.add_version(
-            str(document_id),
+            document_id,
             data.content,
             user_id,
             data.base_version_id,
@@ -102,17 +102,17 @@ async def add_version(
 @router.get("/{document_id}/versions", response_model=List[DocumentVersionResponse])
 async def get_versions(
         document_id: UUID,
-        user_id: str = Depends(get_current_user),
+        user_id: UUID = Depends(get_current_user),
         service: DocumentService = Depends(get_document_service),
 ):
-    return await service.get_versions(str(document_id))
+    return await service.get_versions(document_id)
 
 
 @router.post("/{document_id}/revert/{version_id}", response_model=DocumentVersionResponse)
 async def revert_version(
         document_id: UUID,
         version_id: UUID,
-        user_id: str = Depends(get_current_user),
+        user_id: UUID = Depends(get_current_user),
         document_service: DocumentService = Depends(get_document_service),
         user_service: UserService = Depends(get_user_service),
 ):
@@ -123,13 +123,13 @@ async def revert_version(
     )
 
     new_version = await document_service.revert_to_version(
-        str(document_id),
-        str(version_id),
+        document_id,
+        version_id,
         user_id,
     )
 
     # получаем email пользователя
-    user_obj = await user_service.get_user(UUID(user_id))
+    user_obj = await user_service.get_user(user_id)
     author_email = user_obj.email if user_obj else "unknown"
 
     duration = round(time.time() - start_time, 4)
@@ -153,7 +153,7 @@ async def revert_version(
 async def share_document(
         document_id: UUID,
         data: ShareRequest,
-        user_id: str = Depends(get_current_user),
+        user_id: UUID = Depends(get_current_user),
         document_service: DocumentService = Depends(get_document_service),
         user_service: UserService = Depends(get_user_service),
 ):
@@ -163,7 +163,7 @@ async def share_document(
         raise HTTPException(status_code=404, detail="User not found")
 
     return await document_service.share_document(
-        str(document_id),
+        document_id,
         user_id,
-        str(target_user.id)
+        target_user.id
     )

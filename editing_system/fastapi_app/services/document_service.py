@@ -15,6 +15,7 @@ from sqlalchemy import desc
 from fastapi import HTTPException, status
 from uuid import UUID
 
+
 class DocumentNotFound(Exception):
     pass
 
@@ -24,7 +25,7 @@ class DocumentService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_document(self, data: DocumentCreate, owner_id: str) -> Document:
+    async def create_document(self, data: DocumentCreate, owner_id: UUID) -> Document:
         document = Document(
             title=data.title,
             owner_id=owner_id,
@@ -46,7 +47,7 @@ class DocumentService:
 
         return document
 
-    async def get_documents(self, user_id: str):
+    async def get_documents(self, user_id: UUID):
 
         result = await self.db.execute(
             select(Document)
@@ -59,7 +60,7 @@ class DocumentService:
 
         return result.scalars().unique().all()
 
-    async def get_document(self, document_id: str) -> Document:
+    async def get_document(self, document_id: UUID) -> Document:
         result = await self.db.execute(
             select(Document).where(Document.id == document_id)
         )
@@ -72,9 +73,9 @@ class DocumentService:
 
     async def add_version(
             self,
-            document_id: str,
+            document_id: UUID,
             content: str,
-            user_id: str,
+            user_id: UUID,
             base_version_id: UUID,
     ):
         # получаем последнюю версию
@@ -86,11 +87,8 @@ class DocumentService:
         )
 
         latest_version = result.scalar_one_or_none()
-        print("LATEST:", str(latest_version.id))
-        print("BASE:", str(base_version_id))
-        print("EQUAL:", str(latest_version.id) == str(base_version_id))
 
-        if latest_version and str(latest_version.id) != str(base_version_id):
+        if latest_version and latest_version.id != base_version_id:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Document was modified by another user",
@@ -108,7 +106,7 @@ class DocumentService:
 
         return new_version
 
-    async def get_versions(self, document_id: str):
+    async def get_versions(self, document_id: UUID):
 
         result = await self.db.execute(
             select(DocumentVersion, User.email)
@@ -133,7 +131,7 @@ class DocumentService:
 
         return versions
 
-    async def get_latest_version(self, document_id: str):
+    async def get_latest_version(self, document_id: UUID):
         result = await self.db.execute(
             select(DocumentVersion)
             .where(DocumentVersion.document_id == document_id)
@@ -142,7 +140,7 @@ class DocumentService:
 
         return result.scalars().first()
 
-    async def revert_to_version(self, document_id: str, version_id: str, user_id: str):
+    async def revert_to_version(self, document_id: UUID, version_id: UUID, user_id: UUID):
         result = await self.db.execute(
             select(DocumentVersion).where(DocumentVersion.id == version_id)
         )
@@ -165,9 +163,9 @@ class DocumentService:
 
     async def share_document(
             self,
-            document_id: str,
-            owner_id: str,
-            target_user_id: str
+            document_id: UUID,
+            owner_id: UUID,
+            target_user_id: UUID
     ):
 
         document = await self.get_document(document_id)

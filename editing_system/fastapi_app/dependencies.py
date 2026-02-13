@@ -7,7 +7,7 @@ from editing_system.fastapi_app.services import (
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
-
+from uuid import UUID
 from editing_system.fastapi_app.config import settings
 
 security = HTTPBearer()
@@ -25,7 +25,7 @@ async def get_current_user(
             algorithms=[settings.JWT_ALGORITHM],
         )
 
-        user_id = payload.get("sub")
+        user_id = UUID(payload["sub"])
 
         if user_id is None:
             raise HTTPException(

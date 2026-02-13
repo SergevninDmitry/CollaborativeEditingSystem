@@ -43,8 +43,16 @@ def main():
         url_path="documents"
     )
 
+    profile_page = st.Page(
+        "pages/profile.py",
+        title="Profile",
+        icon="👤",
+        url_path="profile"
+    )
+
     pg = st.navigation([welcome_page,
                         login_page,
+                        profile_page,
                         documents_page,
                         editor_page
     ])

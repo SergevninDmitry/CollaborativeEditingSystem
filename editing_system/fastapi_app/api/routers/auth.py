@@ -5,6 +5,7 @@ from editing_system.fastapi_app.db.session import get_session
 from editing_system.fastapi_app.db.schemas import LoginRequest, TokenResponse
 from editing_system.fastapi_app.services.auth_service import AuthService, InvalidCredentials
 from editing_system.fastapi_app.dependencies import get_current_user
+from uuid import UUID
 
 router = APIRouter(tags=["Auth"])
 
@@ -25,6 +26,6 @@ async def login(
 
 @router.get("/protected")
 async def protected_route(
-        user_id: str = Depends(get_current_user)
+        user_id: UUID = Depends(get_current_user)
 ):
     return {"message": f"You are {user_id}"}

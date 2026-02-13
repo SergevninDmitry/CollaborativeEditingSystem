@@ -1,29 +1,30 @@
 from sqlalchemy import String, ForeignKey, DateTime, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
-from uuid import uuid4
+from sqlalchemy.dialects.postgresql import UUID
+from uuid import uuid4, UUID as PyUUID
 from editing_system.fastapi_app.db.base import Base
 
 
 class DocumentVersion(Base):
     __tablename__ = "document_versions"
 
-    id: Mapped[str] = mapped_column(
-        String(36),
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
         primary_key=True,
-        default=lambda: str(uuid4())
+        default=uuid4
     )
 
-    document_id: Mapped[str] = mapped_column(
-        String(36),
+    document_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
         ForeignKey("documents.id"),
         index=True
     )
 
     content: Mapped[str] = mapped_column(Text)
 
-    created_by: Mapped[str] = mapped_column(
-        String(36),
+    created_by: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
         ForeignKey("users.id")
     )
 

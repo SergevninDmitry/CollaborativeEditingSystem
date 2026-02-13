@@ -141,5 +141,35 @@ class APIClient:
 
         return response.json()
 
+    def update_profile(self, full_name: str, about_user: str):
+        response = requests.put(
+            f"{self.api_url}/users/me",
+            headers=self.get_headers(),
+            json={
+                "full_name": full_name,
+                "about_user": about_user
+            }
+        )
+
+        if response.status_code != 200:
+            raise Exception("Failed to update profile")
+
+        return response.json()
+
+    def change_password(self, old_password: str, new_password: str):
+        response = requests.post(
+            f"{self.api_url}/users/me/change-password",
+            headers=self.get_headers(),
+            json={
+                "old_password": old_password,
+                "new_password": new_password
+            }
+        )
+
+        if response.status_code != 200:
+            raise Exception("Failed to change password")
+
+        return response.json()
+
 
 api_client = APIClient()

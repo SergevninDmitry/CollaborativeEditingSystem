@@ -1,25 +1,25 @@
 from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
-from uuid import uuid4
-
+from sqlalchemy.dialects.postgresql import UUID
+from uuid import uuid4, UUID as PyUUID
 from editing_system.fastapi_app.db.base import Base
 
 
 class DocumentShare(Base):
     __tablename__ = "document_shares"
 
-    id: Mapped[str] = mapped_column(
-        String(36),
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
         primary_key=True,
-        default=lambda: str(uuid4())
+        default=uuid4
     )
 
-    document_id: Mapped[str] = mapped_column(
-        String(36),
+    document_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
         ForeignKey("documents.id", ondelete="CASCADE")
     )
 
-    user_id: Mapped[str] = mapped_column(
-        String(36),
+    user_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE")
     )
