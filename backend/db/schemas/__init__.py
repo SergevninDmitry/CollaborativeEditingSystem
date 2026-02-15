@@ -1,7 +1,6 @@
-from .document import DocumentCreate, DocumentResponse, AddVersionRequest
+from .document import DocumentCreate, DocumentResponse
 from .user import UserCreate, UserResponse, UserUpdate, ChangePasswordRequest
 from .auth import LoginRequest, TokenResponse
-from .document_version import DocumentVersionCreate, DocumentVersionResponse
 from .share import ShareRequest
 
 
@@ -12,9 +11,6 @@ __all__ = [
     "TokenResponse",
     "DocumentCreate",
     "DocumentResponse",
-    "DocumentVersionCreate",
-    "DocumentVersionResponse",
-    "AddVersionRequest",
     "ShareRequest",
     "UserUpdate",
     "ChangePasswordRequest"

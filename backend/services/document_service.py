@@ -11,10 +11,9 @@ from db.models import (
 from db.schemas import (
     DocumentCreate,
 )
-from sqlalchemy import desc
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from uuid import UUID
-import difflib
+from clients.version_client import VersionClient
 
 
 class DocumentNotFound(Exception):
@@ -23,10 +22,16 @@ class DocumentNotFound(Exception):
 
 class DocumentService:
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, version_client: VersionClient):
         self.db = db
+        self.version_client = version_client
 
-    async def create_document(self, data: DocumentCreate, owner_id: UUID) -> Document:
+    async def create_document(
+            self,
+            data: DocumentCreate,
+            owner_id: UUID,
+            token: str,
+    ) -> Document:
         document = Document(
             title=data.title,
             owner_id=owner_id,
@@ -35,10 +40,11 @@ class DocumentService:
         self.db.add(document)
         await self.db.flush()  # получаем document.id без commit
 
-        first_version = DocumentVersion(
+        first_version = await self.version_client.create_initial_version(
             document_id=document.id,
             content=data.content,
-            created_by=owner_id,
+            user_id=owner_id,
+            token=token,
         )
 
         self.db.add(first_version)

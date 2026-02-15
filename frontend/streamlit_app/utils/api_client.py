@@ -89,7 +89,7 @@ class APIClient:
 
     def add_version(self, document_id: str, content: str, base_version_id: str):
         response = requests.post(
-            f"{self.api_url}/documents/{document_id}/versions",
+            f"{self.api_url}/versions/{document_id}/versions",
             headers=self.get_headers(),
             json={
                 "content": content,
@@ -107,7 +107,7 @@ class APIClient:
 
     def get_versions(self, document_id: str, limit: int = 8):
         response = requests.get(
-            f"{self.api_url}/documents/{document_id}/versions?limit={limit}",
+            f"{self.api_url}/versions/{document_id}/versions?limit={limit}",
             headers=self.get_headers()
         )
 
@@ -118,7 +118,7 @@ class APIClient:
 
     def revert_version(self, document_id: str, version_id: str):
         response = requests.post(
-            f"{self.api_url}/documents/{document_id}/revert/{version_id}",
+            f"{self.api_url}/versions/{document_id}/revert/{version_id}",
             headers=self.get_headers(),
         )
 
@@ -173,7 +173,7 @@ class APIClient:
 
     def get_diff(self, document_id: str, version_id: str):
         response = requests.get(
-            f"{self.api_url}/documents/{document_id}/diff/{version_id}",
+            f"{self.api_url}/versions/{document_id}/diff/{version_id}",
             headers=self.get_headers()
         )
 

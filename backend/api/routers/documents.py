@@ -5,27 +5,21 @@ from uuid import UUID
 from services import (
     DocumentService,
     DocumentNotFound,
-    UserService,
-    DocumentVersionService
+    UserService
 )
 from db.schemas import (
     DocumentCreate,
     DocumentResponse,
-    DocumentVersionResponse,
-    AddVersionRequest,
     ShareRequest
 )
 from dependencies import (
     get_current_user,
     get_document_service,
-    get_user_service,
-    get_version_service
+    get_user_service
 )
-from db.models import User
-from sqlalchemy import select
+from dependencies import get_access_token
 
 import logging
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +30,10 @@ router = APIRouter(tags=["Documents"])
 async def create_document(
         data: DocumentCreate,
         user_id: UUID = Depends(get_current_user),
+        token: str = Depends(get_access_token),
         service: DocumentService = Depends(get_document_service),
 ):
-    document = await service.create_document(data, user_id)
+    document = await service.create_document(data, user_id, token)
     return document
 
 

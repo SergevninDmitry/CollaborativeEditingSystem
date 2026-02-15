@@ -2,21 +2,24 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from uuid import UUID
 
-from services import (
-    DocumentService,
+from domains.versions.facade import VersionFacade
+from domains.versions.service import (
+    DocumentVersionService,
     DocumentNotFound,
-    UserService,
-    DocumentVersionService
+    VersionConflict
 )
-from db.schemas import (
+from domains.versions.schemas import (
     DocumentVersionResponse,
     AddVersionRequest
 )
 from dependencies import (
+    get_version_service,
     get_current_user,
-    get_user_service,
-    get_version_service
+    get_version_facade,
+    get_user_gateway
 )
+
+from domains.versions.gateways.user_gateway import UserGateway
 
 import logging
 import time
@@ -46,12 +49,7 @@ async def add_version(
         )
 
         return version
-    except Exception as e:
-        logger.error(
-            f"[add_version FAILED] user={user_id} document={document_id} "
-            f"content={data.content} base_version_id={data.base_version_id}"
-            f"error:{e}"
-        )
+    except VersionConflict:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Document was modified by another user",
@@ -61,11 +59,10 @@ async def add_version(
 @router.get("/{document_id}/versions", response_model=List[DocumentVersionResponse])
 async def get_versions(
         document_id: UUID,
-        limit: int = 8,
         user_id: UUID = Depends(get_current_user),
-        version_service: DocumentVersionService = Depends(get_version_service),
+        facade: VersionFacade = Depends(get_version_facade),
 ):
-    return await version_service.get_versions(document_id)
+    return await facade.get_versions(document_id)
 
 
 @router.post("/{document_id}/revert/{version_id}", response_model=DocumentVersionResponse)
@@ -74,7 +71,7 @@ async def revert_version(
         version_id: UUID,
         user_id: UUID = Depends(get_current_user),
         version_service: DocumentVersionService = Depends(get_version_service),
-        user_service: UserService = Depends(get_user_service),
+        user_gateway: UserGateway = Depends(get_user_gateway),
 ):
     start_time = time.time()
 
@@ -89,14 +86,11 @@ async def revert_version(
     )
 
     # получаем email пользователя
-    user_obj = await user_service.get_user(user_id)
-    author_email = user_obj.email if user_obj else "unknown"
-
-    duration = round(time.time() - start_time, 4)
+    author = await user_gateway.get_author(user_id)
 
     logger.info(
-        f"[REVERT SUCCESS] user={user_id} author_email= {author_email} document={document_id} "
-        f"new_version={new_version.id} duration={duration}s"
+        f"[REVERT SUCCESS] user={user_id} author_email= {author.email} document={document_id} "
+        f"new_version={new_version.id}"
     )
 
     return {
@@ -105,7 +99,7 @@ async def revert_version(
         "content": new_version.content,
         "created_by": new_version.created_by,
         "created_at": new_version.created_at,
-        "author_email": author_email
+        "author_email": author.email
     }
 
 

@@ -18,6 +18,3 @@ class DocumentResponse(BaseModel):
         from_attributes = True
 
 
-class AddVersionRequest(BaseModel):
-    content: str
-    base_version_id: UUID

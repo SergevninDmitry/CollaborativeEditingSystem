@@ -4,12 +4,11 @@ from api.routers import (
     health,
     users,
     auth,
-    documents,
-    versions
+    documents
 )
+from domains.versions.router import router as versions_router
 from db.base import Base
 from db.session import engine
-from db.models import User, Document, DocumentVersion
 
 
 def create_app() -> FastAPI:
@@ -23,7 +22,7 @@ def create_app() -> FastAPI:
         (users.router, "/users"),
         (auth.router, "/auth"),
         (documents.router, "/documents"),
-        (versions.router, "/versions")
+        (versions_router, "/versions")
     ]
 
     for router, prefix in routers:
