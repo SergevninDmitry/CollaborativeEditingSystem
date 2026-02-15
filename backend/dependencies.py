@@ -2,7 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from db.session import get_session
 from services import (
     UserService,
-    DocumentService
+    DocumentService,
+    DocumentVersionService
 )
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -52,3 +53,9 @@ async def get_document_service(
         db: AsyncSession = Depends(get_session),
 ) -> DocumentService:
     return DocumentService(db)
+
+
+async def get_version_service(
+        db: AsyncSession = Depends(get_session),
+) -> DocumentVersionService:
+    return DocumentVersionService(db)

@@ -4,7 +4,8 @@ from api.routers import (
     health,
     users,
     auth,
-    documents
+    documents,
+    versions
 )
 from db.base import Base
 from db.session import engine
@@ -21,7 +22,8 @@ def create_app() -> FastAPI:
         (health.router, "/health"),
         (users.router, "/users"),
         (auth.router, "/auth"),
-        (documents.router, "/documents")
+        (documents.router, "/documents"),
+        (versions.router, "/versions")
     ]
 
     for router, prefix in routers:
