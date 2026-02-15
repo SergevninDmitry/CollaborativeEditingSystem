@@ -1,3 +1,14 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ===== Virtual environments =====
+venv/
+.env/
+.env.local
+.venv/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -210,3 +221,29 @@ __marimo__/
 .idea/
 .vscode/
 *.swp
+*.swo
+
+# ===== Logs =====
+*.log
+
+# ===== Tests =====
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ===== Streamlit =====
+.streamlit/secrets.toml
+
+# ===== FastAPI =====
+instance/
+*.db
+*.sqlite3
+
+# ===== Docker =====
+docker-compose.override.yml
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+app.db
