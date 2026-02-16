@@ -17,15 +17,13 @@ class DocumentVersion(Base):
 
     document_id: Mapped[PyUUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("documents.id"),
         index=True
     )
 
     content: Mapped[str] = mapped_column(Text)
 
     created_by: Mapped[PyUUID] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id")
+        UUID(as_uuid=True)
     )
 
     created_at: Mapped[datetime] = mapped_column(

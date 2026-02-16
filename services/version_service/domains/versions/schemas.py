@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from uuid import UUID
+from typing import Optional
 
 
 class DocumentVersionCreate(BaseModel):
@@ -21,4 +22,4 @@ class DocumentVersionResponse(BaseModel):
 
 class AddVersionRequest(BaseModel):
     content: str
-    base_version_id: UUID
+    base_version_id: Optional[UUID] = None

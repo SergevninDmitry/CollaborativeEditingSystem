@@ -25,8 +25,9 @@ class DocumentVersionService:
     ):
         latest_version = await self.repo.get_latest(document_id)
 
-        if latest_version and latest_version.id != base_version_id:
-            raise VersionConflict()
+        if base_version_id is not None:
+            if latest_version and latest_version.id != base_version_id:
+                raise VersionConflict()
 
         return await self.repo.create(
             document_id,

@@ -4,7 +4,6 @@ from typing import List
 
 from db.models import (
     Document,
-    DocumentVersion,
     User,
     DocumentShare
 )
@@ -13,8 +12,7 @@ from db.schemas import (
 )
 from fastapi import HTTPException
 from uuid import UUID
-from clients.version_client import VersionClient
-
+from clients.http_version_client import HttpVersionClient
 
 class DocumentNotFound(Exception):
     pass
@@ -22,7 +20,7 @@ class DocumentNotFound(Exception):
 
 class DocumentService:
 
-    def __init__(self, db: AsyncSession, version_client: VersionClient):
+    def __init__(self, db: AsyncSession, version_client: HttpVersionClient):
         self.db = db
         self.version_client = version_client
 
@@ -32,22 +30,25 @@ class DocumentService:
             owner_id: UUID,
             token: str,
     ) -> Document:
+
         document = Document(
             title=data.title,
             owner_id=owner_id,
         )
 
         self.db.add(document)
-        await self.db.flush()  # получаем document.id без commit
+        await self.db.flush()
 
-        first_version = await self.version_client.create_initial_version(
-            document_id=document.id,
-            content=data.content,
-            user_id=owner_id,
-            token=token,
-        )
-
-        self.db.add(first_version)
+        try:
+            await self.version_client.create_initial_version(
+                document_id=document.id,
+                content=data.content,
+                user_id=owner_id,
+                token=token,
+            )
+        except Exception:
+            await self.db.rollback()
+            raise HTTPException(500, "Failed to create initial version")
 
         await self.db.commit()
         await self.db.refresh(document)

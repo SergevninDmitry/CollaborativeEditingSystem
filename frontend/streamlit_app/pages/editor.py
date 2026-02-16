@@ -123,11 +123,14 @@ col1, col2, col3 = st.columns([3, 3, 3])
 # -----------------------------
 with col1:
     if st.button("Save New Version"):
+        latest_versions = api_client.get_versions(document_id, limit=1)
+        latest_version_id = latest_versions[0]["id"]
+
         try:
             new_version = api_client.add_version(
                 document_id,
                 content,
-                st.session_state.editing_base_version_id
+                latest_version_id  # ← вместо session_state
             )
 
             # update base after successful save

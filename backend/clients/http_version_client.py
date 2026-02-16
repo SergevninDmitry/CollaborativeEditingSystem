@@ -18,18 +18,23 @@ class HttpVersionClient:
             user_id: UUID,
             token: str
     ):
-
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{self.url}/versions/{document_id}/versions",
-                json={
-                    "content": content,
-                    "base_version_id": None
-                },
-                headers={
-                    "Authorization": f"Bearer {token}"
-                }
-            )
+        async with httpx.AsyncClient(
+                timeout=httpx.Timeout(5.0)
+        ) as client:
+            try:
+                response = await client.post(
+                    f"{self.url}/versions/{document_id}/versions",
+                    json={
+                        "content": content,
+                        "base_version_id": None
+                    },
+                    headers={
+                        "Authorization": f"Bearer {token}"
+                    }
+                )
+                response.raise_for_status()
+            except httpx.RequestError:
+                raise Exception("Version service unavailable")
 
         response.raise_for_status()
         return response.json()

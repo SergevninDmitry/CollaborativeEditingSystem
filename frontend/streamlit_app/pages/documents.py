@@ -23,6 +23,7 @@ if st.button("Create Document"):
     else:
         doc = api_client.create_document(new_title, new_content)
         st.session_state.selected_document_id = doc["id"]
+        st.rerun()
 
 st.divider()
 

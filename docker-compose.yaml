@@ -17,7 +17,8 @@ services:
       --host 0.0.0.0
       --port 8080
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/" ]
       interval: 5s
@@ -54,6 +55,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   version_service:
     build: ./services/version_service
@@ -61,9 +67,15 @@ services:
     ports:
       - "8001:8001"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     env_file:
       - .env
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health/" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
 
 
 

@@ -1,23 +1,13 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from db.session import get_session
-from services import (
-    UserService,
-    DocumentService
-)
-from domains.versions.service import DocumentVersionService
-from domains.versions.facade import VersionFacade
-from clients.version_client import LocalVersionClient, VersionClient
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from uuid import UUID
-from config import settings
-from domains.versions.repository import VersionRepository
-from integrations.http_user_gateway import HttpUserGateway
+
+from db.session import get_session
+from services import UserService, DocumentService
 from clients.http_version_client import HttpVersionClient
-
-USE_REMOTE_USER_SERVICE = True
-
+from config import settings
 
 security = HTTPBearer()
 
@@ -57,47 +47,18 @@ async def get_user_service(
     return UserService(db)
 
 
-async def get_version_repository(
-        db: AsyncSession = Depends(get_session),
-) -> VersionRepository:
-    return VersionRepository(db)
-
-
-async def get_version_service(
-        repo: VersionRepository = Depends(get_version_repository),
-) -> DocumentVersionService:
-    return DocumentVersionService(repo)
-
-
-async def get_version_client(
-        service: DocumentVersionService = Depends(get_version_service),
-):
-    return LocalVersionClient(service)
-
-
-async def get_version_facade(
-        version_service: DocumentVersionService = Depends(get_version_service),
-        user_service: UserService = Depends(get_user_service),
-) -> VersionFacade:
-    return VersionFacade(version_service, user_service)
+def get_version_client() -> HttpVersionClient:
+    return HttpVersionClient()
 
 
 async def get_document_service(
         db: AsyncSession = Depends(get_session),
-        version_client: VersionClient = Depends(get_version_client),
+        version_client: HttpVersionClient = Depends(get_version_client),
 ) -> DocumentService:
     return DocumentService(db, version_client)
 
 
-async def get_user_gateway():
-    return HttpUserGateway()
-
-
-def get_version_client():
-    return HttpVersionClient()
-
-
 async def get_access_token(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+        credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
     return credentials.credentials

@@ -6,7 +6,7 @@ from api.routers import (
     auth,
     documents
 )
-from domains.versions.router import router as versions_router
+from api.routers.versions import router as versions_router
 from db.base import Base
 from db.session import engine
 
