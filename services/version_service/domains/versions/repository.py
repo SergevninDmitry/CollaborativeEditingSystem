@@ -32,9 +32,8 @@ class VersionRepository:
         )
 
         self.db.add(version)
+        await self.db.flush()
         await self.db.commit()
-        await self.db.refresh(version)
-
         return version
 
     async def get_versions(self, document_id: UUID, limit: int):

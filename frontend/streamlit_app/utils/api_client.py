@@ -2,12 +2,13 @@ import requests
 from typing import Optional
 import streamlit as st
 import os
+from config import settings
 
 
 class APIClient:
 
     def __init__(self, api_url: Optional[str] = None):
-        self.api_url = api_url or os.getenv("API_URL", "http://fastapi:8000")
+        self.api_url = settings.API_URL
 
     def login(self, email: str, password: str):
         response = requests.post(

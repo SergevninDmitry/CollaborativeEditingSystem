@@ -11,14 +11,12 @@ from fastapi import HTTPException, status
 from uuid import UUID
 from config import settings
 
-
 security = HTTPBearer()
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+        credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> UUID:
-
     token = credentials.credentials
 
     try:
@@ -40,23 +38,26 @@ async def get_current_user(
 
 
 async def get_repository(
-    db: AsyncSession = Depends(get_session),
+        db: AsyncSession = Depends(get_session),
 ):
     return VersionRepository(db)
 
 
 async def get_version_service(
-    repo: VersionRepository = Depends(get_repository),
+        repo: VersionRepository = Depends(get_repository),
 ):
     return DocumentVersionService(repo)
 
 
+user_gateway = HttpUserGateway()
+
+
 async def get_user_gateway():
-    return HttpUserGateway()
+    return user_gateway
 
 
 async def get_version_facade(
-    service: DocumentVersionService = Depends(get_version_service),
-    user_gateway = Depends(get_user_gateway),
+        service: DocumentVersionService = Depends(get_version_service),
+        user_gateway=Depends(get_user_gateway),
 ):
     return VersionFacade(service, user_gateway)

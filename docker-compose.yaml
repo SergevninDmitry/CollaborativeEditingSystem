@@ -2,25 +2,33 @@ version: "3.9"
 
 services:
 
-  fastapi:
+  api_gateway:
     build:
-      context: ./backend
-    container_name: fastapi_app
+      context: .
+      dockerfile: services/api_gateway/Dockerfile
+    container_name: api_gateway
     ports:
       - "8080:8080"
-    volumes:
-      - ./backend:/fastapi_app
     env_file:
       - .env
-    command: >
-      uvicorn main:app
-      --host 0.0.0.0
-      --port 8080
     depends_on:
       db:
         condition: service_healthy
+      auth_service:
+        condition: service_healthy
+      user_service:
+        condition: service_healthy
+      document_service:
+        condition: service_healthy
+      version_service:
+        condition: service_healthy
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health/" ]
+      test: [
+        "CMD",
+        "python",
+        "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:8080/health/')"
+      ]
       interval: 5s
       timeout: 3s
       retries: 3
@@ -34,7 +42,7 @@ services:
     volumes:
       - ./frontend:/app
     depends_on:
-      fastapi:
+      api_gateway:
         condition: service_healthy
     env_file:
       - .env
@@ -62,21 +70,100 @@ services:
       retries: 5
 
   version_service:
-    build: ./services/version_service
+    build:
+      context: .
+      dockerfile: services/version_service/Dockerfile
     container_name: version_service
     ports:
       - "8001:8001"
     depends_on:
       db:
         condition: service_healthy
+      user_service:
+        condition: service_healthy
     env_file:
       - .env
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8001/health/" ]
+      test: [
+        "CMD",
+        "python",
+        "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:8001/health/')"
+      ]
       interval: 5s
       timeout: 3s
       retries: 3
 
+  document_service:
+    build:
+      context: .
+      dockerfile: services/document_service/Dockerfile
+    container_name: document_service
+    ports:
+      - "8002:8002"
+    depends_on:
+      version_service:
+        condition: service_healthy
+      user_service:
+        condition: service_healthy
+    env_file:
+      - .env
+    healthcheck:
+      test: [
+        "CMD",
+        "python",
+        "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:8002/health/')"
+      ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  user_service:
+    build:
+      context: .
+      dockerfile: services/user_service/Dockerfile
+    container_name: user_service
+    ports:
+      - "8003:8003"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [
+        "CMD",
+        "python",
+        "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:8003/health/')"
+      ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  auth_service:
+    build:
+      context: .
+      dockerfile: services/auth_service/Dockerfile
+    container_name: auth_service
+    ports:
+      - "8004:8004"
+    env_file:
+      - .env
+    depends_on:
+      user_service:
+        condition: service_healthy
+    healthcheck:
+      test: [
+        "CMD",
+        "python",
+        "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:8004/health/')"
+      ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
 
 
 volumes:

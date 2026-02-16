@@ -9,7 +9,7 @@ load_dotenv(find_dotenv())
 @dataclass
 class Settings:
     HOST: str = os.environ.get("HOST")
-    FASTAPI_PORT: int = int(os.environ.get("FASTAPI_PORT", 8080))
+    FASTAPI_PORT: int = int(os.environ.get("FASTAPI_PORT", 8000))
     DATABASE_URL: str = os.environ.get(
         "DATABASE_URL",
         "sqlite+aiosqlite:///./app.db"
@@ -17,7 +17,7 @@ class Settings:
     JWT_SECRET_KEY: str = os.environ.get("JWT_SECRET_KEY")
     JWT_ALGORITHM: str = os.environ.get("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
-    API_URL: str = os.environ.get("API_URL")
+    INTERNAL_SERVICE_TOKEN = os.environ.get("INTERNAL_SERVICE_TOKEN")
 
 
 def setup_logging() -> None:

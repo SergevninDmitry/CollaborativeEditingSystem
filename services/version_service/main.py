@@ -3,6 +3,7 @@ from domains.versions.router import router as versions_router
 from db.base import Base
 from db.session import engine
 from api.health import router as health_router
+from dependencies import user_gateway
 
 app = FastAPI(title="Version Service")
 
@@ -14,3 +15,8 @@ app.include_router(health_router, prefix="/health")
 async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await user_gateway.close()
