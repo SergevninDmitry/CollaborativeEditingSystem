@@ -6,7 +6,7 @@ class UserClient:
         self.client = httpx.AsyncClient(base_url=settings.USER_SERVICE_URL)
 
     async def register(self, data: dict):
-        response = await self.client.post("/users", json=data)
+        response = await self.client.post("/users/", json=data)
         return response
 
     async def get_me(self, token: str):

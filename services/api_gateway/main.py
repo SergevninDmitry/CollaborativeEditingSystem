@@ -5,8 +5,21 @@ from api.routers.auth import router as auth_router
 from api.routers.users import router as users_router
 from api.routers.documents import router as documents_router
 from api.routers.versions import router as versions_router
+from contextlib import asynccontextmanager
+from clients.registry import Clients
 
-app = FastAPI(title="API Gateway")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.clients = Clients()
+    yield
+    await app.state.clients.close()
+
+
+app = FastAPI(
+    title="API Gateway",
+    lifespan=lifespan
+)
 
 app.include_router(health_router, prefix="/health")
 app.include_router(auth_router, prefix="/auth")

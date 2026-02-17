@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from domains.documents.router import router as document_router
-from db.base import Base
-from db.session import engine
+from api.documents import router as document_router
+from infrastructure.db.base import Base
+from infrastructure.db.session import engine
 from api.health import router as health_router
 from contextlib import asynccontextmanager
 
@@ -11,6 +11,7 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
+    await engine.dispose()
 
 
 app = FastAPI(

@@ -5,10 +5,10 @@ from jose import jwt, JWTError
 from uuid import UUID
 
 from config import settings
-from db.session import get_session
-from domains.documents.service import DocumentService
-from clients.http_version_client import HttpVersionClient
-from clients.http_user_client import HttpUserClient
+from infrastructure.db.session import get_session
+from application.services.document_service import DocumentService
+from infrastructure.clients.http_version_client import HttpVersionClient
+from infrastructure.clients.http_user_client import HttpUserClient
 
 security = HTTPBearer()
 

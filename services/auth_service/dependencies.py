@@ -2,7 +2,7 @@ from fastapi import Depends, status, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from uuid import UUID
-from clients.http_user_client import HttpUserClient
+from infrastructure.clients.http_user_client import HttpUserClient
 from config import settings
 
 security = HTTPBearer()

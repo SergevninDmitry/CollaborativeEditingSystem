@@ -4,8 +4,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from uuid import UUID
 
-from db.session import get_session
-from services.user_service import UserService, UserNotFound
+from infrastructure.db.session import get_session
+from application.services.user_service import UserService
 from config import settings
 
 security = HTTPBearer()

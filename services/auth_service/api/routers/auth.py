@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from shared.common.schemas.auth import LoginRequest, TokenResponse
-from services.auth_service import AuthService, InvalidCredentials
+from application.services.auth_service import AuthService, InvalidCredentials
 import logging
 
 logger = logging.getLogger(__name__)

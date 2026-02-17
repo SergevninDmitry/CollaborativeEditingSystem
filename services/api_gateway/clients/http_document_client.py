@@ -6,11 +6,11 @@ class DocumentClient:
         self.client = httpx.AsyncClient(base_url=settings.DOCUMENT_SERVICE_URL)
 
     async def create(self, token: str, data: dict):
-        response = await self.client.post("/documents", json=data, headers={"Authorization": f"Bearer {token}"})
+        response = await self.client.post("/documents/", json=data, headers={"Authorization": f"Bearer {token}"})
         return response
 
     async def get_documents(self, token: str):
-        response = await self.client.get("/documents", headers={"Authorization": f"Bearer {token}"})
+        response = await self.client.get("/documents/", headers={"Authorization": f"Bearer {token}"})
         return response
 
     async def get_document(self, token: str, document_id: str):

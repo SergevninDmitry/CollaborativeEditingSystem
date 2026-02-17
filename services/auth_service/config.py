@@ -14,7 +14,7 @@ class Settings:
     JWT_ALGORITHM: str = os.environ.get("JWT_ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 60))
     USER_SERVICE_URL: str = os.getenv("USER_SERVICE_URL", "http://user_service:8003")
-
+    INTERNAL_SERVICE_TOKEN: str = os.getenv("INTERNAL_SERVICE_TOKEN")
 
 def setup_logging() -> None:
     logging.basicConfig(

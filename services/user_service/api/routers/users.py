@@ -9,7 +9,7 @@ from shared.common.schemas.user import (
     ChangePasswordRequest
 )
 from dependencies import get_user_service, get_current_user, verify_internal
-from services.user_service import (
+from application.services.user_service import (
     UserService,
     EmailAlreadyExists,
     UserNotFound,
@@ -43,7 +43,6 @@ async def get_auth_data(
     service: UserService = Depends(get_user_service),
 ):
     user = await service.get_user_by_email(email)
-
     if not user:
         raise HTTPException(404, "User not found")
 

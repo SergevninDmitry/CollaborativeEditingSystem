@@ -1,5 +1,8 @@
 import httpx
 from config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AuthClient:
@@ -8,4 +11,5 @@ class AuthClient:
 
     async def login(self, credentials: dict):
         response = await self.client.post("/auth/login", json=credentials)
+        logger.info(f"AuthClient login r={response}")
         return response
