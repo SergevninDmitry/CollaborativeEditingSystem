@@ -7,10 +7,13 @@ services:
       context: .
       dockerfile: services/api_gateway/Dockerfile
     container_name: api_gateway
+    env_file: [.env]
+    command: >
+      uvicorn main:app
+      --host ${SERVICE_HOST}
+      --port ${API_GATEWAY_PORT}
     ports:
-      - "8080:8080"
-    env_file:
-      - .env
+      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
     depends_on:
       db:
         condition: service_healthy
@@ -23,145 +26,142 @@ services:
       version_service:
         condition: service_healthy
     healthcheck:
-      test: [
-        "CMD",
-        "python",
-        "-c",
-        "import urllib.request; urllib.request.urlopen('http://localhost:8080/health/')"
-      ]
-      interval: 5s
+      test: ["CMD", "python", "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:${API_GATEWAY_PORT}/health/')"]
+      interval: 30s
       timeout: 3s
       retries: 3
+
 
   streamlit:
     build:
       context: ./frontend
     container_name: streamlit_app
+    env_file: [.env]
+    command: >
+      streamlit run streamlit_app/main.py
+      --server.address 0.0.0.0
+      --server.port ${STREAMLIT_PORT}
+      --server.headless true
     ports:
-      - "8501:8501"
+      - "${STREAMLIT_PORT}:${STREAMLIT_PORT}"
     volumes:
       - ./frontend:/app
     depends_on:
       api_gateway:
         condition: service_healthy
-    env_file:
-      - .env
-    command: >
-      streamlit run streamlit_app/main.py
-      --server.address 0.0.0.0
-      --server.port 8501
-      --server.headless true
+
 
   db:
     image: postgres:16
     container_name: postgres_db
     environment:
-      POSTGRES_DB: collab_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 30s
       timeout: 5s
       retries: 5
+
 
   version_service:
     build:
       context: .
       dockerfile: services/version_service/Dockerfile
     container_name: version_service
+    env_file: [.env]
+    command: >
+      uvicorn main:app
+      --host ${SERVICE_HOST}
+      --port ${VERSION_SERVICE_PORT}
     ports:
-      - "8001:8001"
+      - "${VERSION_SERVICE_PORT}:${VERSION_SERVICE_PORT}"
     depends_on:
       db:
         condition: service_healthy
       user_service:
         condition: service_healthy
-    env_file:
-      - .env
     healthcheck:
-      test: [
-        "CMD",
-        "python",
-        "-c",
-        "import urllib.request; urllib.request.urlopen('http://localhost:8001/health/')"
-      ]
-      interval: 5s
+      test: ["CMD", "python", "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:${VERSION_SERVICE_PORT}/health/')"]
+      interval: 30s
       timeout: 3s
       retries: 3
+
 
   document_service:
     build:
       context: .
       dockerfile: services/document_service/Dockerfile
     container_name: document_service
+    env_file: [.env]
+    command: >
+      uvicorn main:app
+      --host ${SERVICE_HOST}
+      --port ${DOCUMENT_SERVICE_PORT}
     ports:
-      - "8002:8002"
+      - "${DOCUMENT_SERVICE_PORT}:${DOCUMENT_SERVICE_PORT}"
     depends_on:
       version_service:
         condition: service_healthy
       user_service:
         condition: service_healthy
-    env_file:
-      - .env
     healthcheck:
-      test: [
-        "CMD",
-        "python",
-        "-c",
-        "import urllib.request; urllib.request.urlopen('http://localhost:8002/health/')"
-      ]
-      interval: 5s
+      test: ["CMD", "python", "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:${DOCUMENT_SERVICE_PORT}/health/')"]
+      interval: 30s
       timeout: 3s
       retries: 3
+
 
   user_service:
     build:
       context: .
       dockerfile: services/user_service/Dockerfile
     container_name: user_service
+    env_file: [.env]
+    command: >
+      uvicorn main:app
+      --host ${SERVICE_HOST}
+      --port ${USER_SERVICE_PORT}
     ports:
-      - "8003:8003"
-    env_file:
-      - .env
+      - "${USER_SERVICE_PORT}:${USER_SERVICE_PORT}"
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: [
-        "CMD",
-        "python",
-        "-c",
-        "import urllib.request; urllib.request.urlopen('http://localhost:8003/health/')"
-      ]
-      interval: 5s
+      test: ["CMD", "python", "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:${USER_SERVICE_PORT}/health/')"]
+      interval: 30s
       timeout: 3s
       retries: 3
+
 
   auth_service:
     build:
       context: .
       dockerfile: services/auth_service/Dockerfile
     container_name: auth_service
+    env_file: [.env]
+    command: >
+      uvicorn main:app
+      --host ${SERVICE_HOST}
+      --port ${AUTH_SERVICE_PORT}
     ports:
-      - "8004:8004"
-    env_file:
-      - .env
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
     depends_on:
       user_service:
         condition: service_healthy
     healthcheck:
-      test: [
-        "CMD",
-        "python",
-        "-c",
-        "import urllib.request; urllib.request.urlopen('http://localhost:8004/health/')"
-      ]
-      interval: 5s
+      test: ["CMD", "python", "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:${AUTH_SERVICE_PORT}/health/')"]
+      interval: 30s
       timeout: 3s
       retries: 3
 

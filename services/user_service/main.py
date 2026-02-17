@@ -1,9 +1,14 @@
-from fastapi import FastAPI
 from api.routers.users import router as user_router
 from infrastructure.db.base import Base
 from infrastructure.db.session import engine
 from api.routers.health import router as health_router
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -21,3 +26,15 @@ app = FastAPI(
 
 app.include_router(user_router, prefix="/users")
 app.include_router(health_router, prefix="/health")
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error")
+
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error"
+        },
+    )

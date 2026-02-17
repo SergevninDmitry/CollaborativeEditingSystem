@@ -1,5 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
-from shared.common.schemas.auth import LoginRequest
+from fastapi import APIRouter, HTTPException, Depends, status
+from shared.common.schemas.auth import (
+    LoginRequest,
+    TokenResponse,
+)
 from utils.http import build_response
 from dependencies import get_clients
 from clients.registry import Clients
@@ -10,20 +13,42 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Auth"])
 
 
-@router.post("/login")
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+    summary="User authentication",
+    description="""
+Authenticates user credentials via Auth Service
+and returns JWT access token.
+
+This endpoint is exposed through API Gateway and
+proxies request to the authentication microservice.
+""",
+    responses={
+        200: {"description": "Successful authentication"},
+        401: {"description": "Invalid credentials"},
+        500: {"description": "Authentication service error"},
+    },
+)
 async def login(
     data: LoginRequest,
-    clients: Clients = Depends(get_clients)
-
+    clients: Clients = Depends(get_clients),
 ):
-    logger.info(f"login auth_client data={data}")
-    r = await clients.auth.login(data.model_dump())
-    logger.info(f"login auth_client r={r}")
+    """
+    Authenticate user and return access token.
+    """
 
-    if r.status_code != 200:
+    logger.info(f"[AUTH LOGIN] email={data.email}")
+
+    response = await clients.auth.login(data.model_dump())
+
+    logger.info(f"[AUTH RESPONSE] status={response.status_code}")
+
+    if response.status_code != status.HTTP_200_OK:
         raise HTTPException(
-            status_code=r.status_code,
-            detail=r.json()
+            status_code=response.status_code,
+            detail=response.json(),
         )
 
-    return build_response(r)
+    return build_response(response)
