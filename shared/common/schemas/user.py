@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List, Dict
 from uuid import UUID
 
 
@@ -33,3 +33,11 @@ class UserAuthData(BaseModel):
     id: UUID
     email: EmailStr
     password: str
+
+
+class UsersEmailRequest(BaseModel):
+    user_ids: List[UUID]
+
+
+class UsersEmailResponse(BaseModel):
+    emails: Dict[UUID, str]

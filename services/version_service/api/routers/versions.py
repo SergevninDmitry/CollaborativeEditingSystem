@@ -7,7 +7,7 @@ from application.versions.version_service import (
     VersionConflict,
 )
 
-from infrastructure.db.schemas.version import (
+from shared.common.schemas.version import (
     DocumentVersionResponse,
     AddVersionRequest,
 )

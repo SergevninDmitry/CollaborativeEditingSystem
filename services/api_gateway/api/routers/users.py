@@ -35,7 +35,7 @@ async def register(
 ):
     logger.info(f"[USER REGISTER] email={data.email}")
 
-    r = await clients.user.register(data.model_dump())
+    r = await clients.user.register(data.model_dump(mode="json"))
 
     if r.status_code != status.HTTP_201_CREATED:
         raise HTTPException(r.status_code, r.json())
@@ -76,7 +76,7 @@ async def update_me(
 ):
     logger.info("[USER UPDATE ME]")
 
-    r = await clients.user.update_me(token, data.model_dump())
+    r = await clients.user.update_me(token, data.model_dump(mode="json"))
 
     if r.status_code != status.HTTP_200_OK:
         raise HTTPException(r.status_code, r.json())
@@ -100,7 +100,7 @@ async def change_password(
 ):
     logger.info("[USER CHANGE PASSWORD]")
 
-    r = await clients.user.change_password(token, data.model_dump())
+    r = await clients.user.change_password(token, data.model_dump(mode="json"))
 
     if r.status_code != status.HTTP_200_OK:
         raise HTTPException(r.status_code, r.json())

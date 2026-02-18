@@ -89,7 +89,10 @@ class DocumentService:
         document = await self.get_document(document_id)
 
         if document.owner_id != owner_id:
-            raise HTTPException(status_code=403, detail="Not owner")
+            raise HTTPException(
+                status_code=403,
+                detail="You are not the owner of the document",
+            )
 
         result = await self.db.execute(
             select(DocumentShare).where(

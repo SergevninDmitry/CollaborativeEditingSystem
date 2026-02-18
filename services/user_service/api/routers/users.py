@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from uuid import UUID
 from pydantic import EmailStr
-
+from typing import Annotated
 from shared.common.schemas.user import (
     UserCreate,
     UserResponse,
@@ -21,6 +21,8 @@ from application.services.user_service import (
     UserNotFound,
     InvalidPassword,
 )
+from typing import List
+
 
 import logging
 
@@ -233,3 +235,28 @@ async def get_user(
         raise HTTPException(404, "User not found")
 
     return user
+
+
+@router.get("/internal/batch")
+async def get_users_batch(
+    ids: List[UUID] | UUID = Query(...),
+    _=Depends(verify_internal),
+    service: UserService = Depends(get_user_service),
+):
+    """
+    Returns users by list of IDs.
+    Used internally by API Gateway.
+    """
+    if isinstance(ids, UUID):
+        ids = [ids]
+    users = await service.get_users_by_ids(ids)
+
+    result = {}
+
+    for user in users:
+        result[str(user.id)] = {
+            "id": str(user.id),
+            "email": user.email,
+        }
+
+    return result

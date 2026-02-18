@@ -31,8 +31,8 @@ def render_colored_diff(diff_text: str):
         unsafe_allow_html=True
     )
 
-require_auth()
 
+require_auth()
 # -----------------------------
 # Document selection check
 # -----------------------------
@@ -47,7 +47,8 @@ st.title("📝 Document Editor")
 # -----------------------------
 # Auto refresh (polling)
 # -----------------------------
-st_autorefresh(interval=3000, key="doc_poll")
+if not st.session_state.get("user_is_editing", False):
+    st_autorefresh(interval=5000, key="doc_poll")
 
 # -----------------------------
 # Fetch versions
@@ -59,6 +60,10 @@ if not versions:
     st.stop()
 
 latest_version = versions[0]
+# if st.session_state.get("just_saved_version") == latest_version["id"]:
+#     st.session_state.editing_base_version_id = latest_version["id"]
+#     st.session_state.editing_base_content = latest_version["content"]
+#     st.session_state.just_saved_version = None
 latest_version_id = latest_version["id"]
 latest_content = latest_version["content"]
 
@@ -78,7 +83,6 @@ if "pending_revert_content" in st.session_state:
 # -----------------------------
 if "editor_initialized_for_doc" not in st.session_state or \
         st.session_state.editor_initialized_for_doc != document_id:
-
     st.session_state.editor_initialized_for_doc = document_id
     st.session_state.editing_base_version_id = latest_version_id
     st.session_state.editing_base_content = latest_content
@@ -98,39 +102,44 @@ if "editing_base_version_id" not in st.session_state:
 # Auto update if no local edits
 # -----------------------------
 if (
-    latest_version_id != st.session_state.editing_base_version_id
-    and st.session_state.editor_content == st.session_state.editing_base_content
+        latest_version_id != st.session_state.editing_base_version_id
+        and st.session_state.editor_content == st.session_state.editing_base_content
 ):
     st.session_state.editing_base_version_id = latest_version_id
     st.session_state.editing_base_content = latest_content
     st.session_state.editor_content = latest_content
     st.rerun()
 
-
-
 # -----------------------------
 # Editor widget
 # -----------------------------
-content = st.text_area(
-    "Content",
-    height=400,
-    key="editor_content"
-)
+with st.form("editor_form", clear_on_submit=False):
+    content = st.text_area(
+        "Content",
+        height=400,
+        key="editor_content"
+    )
+
+    submitted = st.form_submit_button("Save New Version")
+
+if content != st.session_state.editing_base_content:
+    st.session_state.user_is_editing = True
+else:
+    st.session_state.user_is_editing = False
 
 col1, col2, col3 = st.columns([3, 3, 3])
 # -----------------------------
 # Save new version
 # -----------------------------
 with col1:
-    if st.button("Save New Version"):
-        latest_versions = api_client.get_versions(document_id, limit=1)
-        latest_version_id = latest_versions[0]["id"]
+    if submitted:
+        base_version_id = st.session_state.editing_base_version_id
 
         try:
             new_version = api_client.add_version(
                 document_id,
                 content,
-                latest_version_id  # ← вместо session_state
+                base_version_id
             )
 
             # update base after successful save
@@ -141,7 +150,7 @@ with col1:
             st.rerun()
 
         except Exception:
-            st.error("Conflict detected! Document was modified by another user.")
+            st.error("Conflict detected!")
 
 with col2:
     if latest_version_id != st.session_state.editing_base_version_id:
@@ -193,7 +202,6 @@ for version in versions:
 if "current_diff" in st.session_state:
     st.subheader("Changes")
     render_colored_diff(st.session_state.current_diff)
-
 
 # -----------------------------
 # Back button

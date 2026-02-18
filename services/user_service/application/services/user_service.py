@@ -107,3 +107,9 @@ class UserService:
         await self.db.commit()
 
         return {"message": "Password updated"}
+
+    async def get_users_by_ids(self, ids: list[UUID]):
+        result = await self.db.execute(
+            select(User).where(User.id.in_(ids))
+        )
+        return result.scalars().all()

@@ -41,7 +41,7 @@ async def login(
 
     logger.info(f"[AUTH LOGIN] email={data.email}")
 
-    response = await clients.auth.login(data.model_dump())
+    response = await clients.auth.login(data.model_dump(mode="json"))
 
     logger.info(f"[AUTH RESPONSE] status={response.status_code}")
 

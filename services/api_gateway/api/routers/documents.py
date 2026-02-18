@@ -42,7 +42,7 @@ async def create_document(
 ):
     logger.info("[DOCUMENT CREATE]")
 
-    r = await clients.documents.create(token, data.model_dump())
+    r = await clients.documents.create(token, data.model_dump(mode="json"))
 
     if r.status_code != status.HTTP_201_CREATED:
         raise HTTPException(r.status_code, r.json())
@@ -129,10 +129,13 @@ async def share_document(
     r = await clients.documents.share(
         token,
         str(document_id),
-        data.model_dump(),
+        data.model_dump(mode="json"),
     )
 
-    if r.status_code != status.HTTP_200_OK:
-        raise HTTPException(r.status_code, r.json())
+    if r.status_code >= 400:
+        raise HTTPException(
+            status_code=r.status_code,
+            detail=r.json().get("detail", "Service error"),
+        )
 
     return build_response(r)

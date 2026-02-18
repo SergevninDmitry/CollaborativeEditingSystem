@@ -58,18 +58,22 @@ class DocumentVersionService:
 
         versions = result.scalars().all()
 
+        if not versions:
+            return []
+
+        user_ids = list({v.created_by for v in versions})
+        emails_map = await self.user_client.get_users_batch(user_ids)
+
         response = []
 
         for v in versions:
-            email = await self.user_client.get_user_email(v.created_by)
-
             response.append({
                 "id": v.id,
                 "document_id": v.document_id,
                 "content": v.content,
                 "created_by": v.created_by,
                 "created_at": v.created_at,
-                "author_email": email,
+                "author_email": emails_map.get(v.created_by),
             })
 
         return response

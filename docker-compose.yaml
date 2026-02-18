@@ -28,7 +28,7 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c",
         "import urllib.request; urllib.request.urlopen('http://localhost:${API_GATEWAY_PORT}/health/')"]
-      interval: 30s
+      interval: 5s
       timeout: 3s
       retries: 3
 
@@ -65,7 +65,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 30s
+      interval: 5s
       timeout: 5s
       retries: 5
 
@@ -90,7 +90,7 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c",
         "import urllib.request; urllib.request.urlopen('http://localhost:${VERSION_SERVICE_PORT}/health/')"]
-      interval: 30s
+      interval: 5s
       timeout: 3s
       retries: 3
 
@@ -115,7 +115,7 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c",
         "import urllib.request; urllib.request.urlopen('http://localhost:${DOCUMENT_SERVICE_PORT}/health/')"]
-      interval: 30s
+      interval: 5s
       timeout: 3s
       retries: 3
 
@@ -138,7 +138,7 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c",
         "import urllib.request; urllib.request.urlopen('http://localhost:${USER_SERVICE_PORT}/health/')"]
-      interval: 30s
+      interval: 5s
       timeout: 3s
       retries: 3
 
@@ -161,7 +161,7 @@ services:
     healthcheck:
       test: ["CMD", "python", "-c",
         "import urllib.request; urllib.request.urlopen('http://localhost:${AUTH_SERVICE_PORT}/health/')"]
-      interval: 30s
+      interval: 5s
       timeout: 3s
       retries: 3
 

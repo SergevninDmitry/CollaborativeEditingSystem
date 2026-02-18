@@ -14,7 +14,7 @@ class DocumentVersionResponse(BaseModel):
     content: str
     created_by: UUID
     created_at: datetime
-    author_email: str
+    author_email: Optional[str] = None
 
     class Config:
         from_attributes = True

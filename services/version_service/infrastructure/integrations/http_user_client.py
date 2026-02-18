@@ -18,5 +18,35 @@ class HttpUserClient:
 
         return r.json()["email"]
 
+    async def get_users_batch(self, user_ids: list[UUID]) -> dict[UUID, str]:
+
+        if not user_ids:
+            return {}
+
+        params = [("ids", str(uid)) for uid in user_ids]
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.USER_SERVICE_URL}/users/internal/batch",
+                params=params,
+                headers={
+                    "x-service-token": settings.INTERNAL_SERVICE_TOKEN
+                },
+            )
+
+            response.raise_for_status()
+
+            data = response.json()
+
+        # response format:
+        # {
+        #   "uuid": {"id": "...", "email": "..."}
+        # }
+
+        return {
+            UUID(uid): user_data["email"]
+            for uid, user_data in data.items()
+        }
+
     async def close(self):
         await self.client.aclose()

@@ -12,3 +12,4 @@ RUN python -m pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 COPY services/version_service/ .
+COPY shared ./shared

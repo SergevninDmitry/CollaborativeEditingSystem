@@ -38,7 +38,7 @@ async def add_version(
     r = await clients.versions.add_version(
         token,
         str(document_id),
-        data.model_dump(),
+        data.model_dump(mode="json"),
     )
 
     if r.status_code not in (200, 201):
@@ -60,12 +60,18 @@ async def get_versions(
 ):
     logger.info(f"[VERSION LIST] document={document_id}")
 
-    r = await clients.versions.get_versions(token, str(document_id))
+    versions_response = await clients.versions.get_versions(
+        token,
+        str(document_id),
+    )
 
-    if r.status_code != status.HTTP_200_OK:
-        raise HTTPException(r.status_code, r.json())
+    if versions_response.status_code != 200:
+        raise HTTPException(
+            versions_response.status_code,
+            versions_response.json(),
+        )
 
-    return build_response(r)
+    return versions_response.json()
 
 
 @router.post(
