@@ -2,11 +2,6 @@ import streamlit as st
 from utils.api_client import api_client
 from utils.auth import logout
 
-# if "access_token" not in st.session_state:
-#     st.error("You must login first")
-#     st.stop()
-
-
 st.title("Collaborative Editing System")
 
 mode = st.radio(
@@ -70,5 +65,9 @@ if st.session_state.get("access_token"):
     if st.sidebar.button("Logout"):
         logout()
 
-if st.button("Go to select document"):
-    st.switch_page("pages/documents.py")
+if st.session_state.get('user_email'):
+    if st.button("Go to select document"):
+        st.switch_page("pages/documents.py")
+
+    if st.button("Go to edit profile"):
+        st.switch_page("pages/profile.py")

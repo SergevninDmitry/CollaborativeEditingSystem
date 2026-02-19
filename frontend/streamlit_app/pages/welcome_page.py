@@ -37,3 +37,5 @@ Use the sidebar to navigate to the Login page and start using the system.
 """)
 
 st.info("Select a page from the sidebar to continue.")
+if st.button("Go to login"):
+    st.switch_page("pages/login.py")

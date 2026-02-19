@@ -101,7 +101,7 @@ class APIClient:
         if response.status_code == 409:
             raise Exception("Conflict")
 
-        if response.status_code != 200:
+        if response.status_code not in (200, 201):
             raise Exception("Failed to save version")
 
         return response.json()

@@ -37,3 +37,6 @@ if st.button("Change Password"):
         st.success("Password changed successfully")
     except Exception:
         st.error("Wrong password")
+
+if st.button("Go to select document"):
+    st.switch_page("pages/documents.py")

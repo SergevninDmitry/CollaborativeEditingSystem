@@ -136,18 +136,28 @@ class DocumentVersionService:
 
         versions = result.scalars().all()
 
-        for i, v in enumerate(versions):
-            if v.id == version_id and i + 1 < len(versions):
+        if not versions:
+            return ""
 
-                current = v.content
-                previous = versions[i + 1].content
+        latest = versions[0]
 
-                diff = difflib.unified_diff(
-                    previous.splitlines(),
-                    current.splitlines(),
-                    lineterm="",
-                )
+        selected = next(
+            (v for v in versions if v.id == version_id),
+            None
+        )
 
-                return "\n".join(diff)
+        if not selected:
+            return ""
 
-        return ""
+        if selected.id == latest.id:
+            return ""
+
+        diff = difflib.unified_diff(
+            selected.content.splitlines(),
+            latest.content.splitlines(),
+            fromfile="selected",
+            tofile="latest",
+            lineterm="",
+        )
+
+        return "\n".join(diff)
