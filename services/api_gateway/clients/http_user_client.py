@@ -51,3 +51,6 @@ class UserClient:
             UUID(uid): user_data["email"]
             for uid, user_data in data.items()
         }
+
+    async def close(self):
+        await self.client.aclose()

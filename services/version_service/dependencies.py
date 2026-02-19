@@ -34,9 +34,11 @@ async def get_current_user(
             detail="Invalid or expired token",
         )
 
+
 user_client = HttpUserClient()
 
+
 async def get_version_service(
-    db: AsyncSession = Depends(get_session),
+        db: AsyncSession = Depends(get_session),
 ):
     return DocumentVersionService(db, user_client)

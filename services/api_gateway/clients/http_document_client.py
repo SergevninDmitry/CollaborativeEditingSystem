@@ -1,6 +1,7 @@
 import httpx
 from config import settings
 
+
 class DocumentClient:
     def __init__(self):
         self.client = httpx.AsyncClient(base_url=settings.DOCUMENT_SERVICE_URL)
@@ -18,5 +19,9 @@ class DocumentClient:
         return response
 
     async def share(self, token: str, document_id: str, data: dict):
-        response = await self.client.post(f"/documents/{document_id}/share", json=data, headers={"Authorization": f"Bearer {token}"})
+        response = await self.client.post(f"/documents/{document_id}/share", json=data,
+                                          headers={"Authorization": f"Bearer {token}"})
         return response
+
+    async def close(self):
+        await self.client.aclose()

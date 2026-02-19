@@ -23,7 +23,6 @@ from application.services.user_service import (
 )
 from typing import List
 
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -37,10 +36,10 @@ router = APIRouter(tags=["Users"])
     status_code=status.HTTP_201_CREATED,
     summary="Register new user",
     description="""
-Creates a new user account.
-
-Email must be unique across the system.
-""",
+    Creates a new user account.
+    
+    Email must be unique across the system.
+    """,
     responses={
         201: {"description": "User successfully created"},
         400: {"description": "Email already exists"},
@@ -58,7 +57,7 @@ async def create_user(
 
     except EmailAlreadyExists:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail="User with this email already exists",
         )
 
@@ -67,11 +66,11 @@ async def create_user(
     "/internal/auth-data",
     summary="Get authentication data (internal)",
     description="""
-⚠ INTERNAL ENDPOINT.
-
-Used by Auth Service to retrieve user credentials.
-Requires internal service token.
-""",
+    INTERNAL ENDPOINT.
+    
+    Used by Auth Service to retrieve user credentials.
+    Requires internal service token.
+    """,
     responses={
         200: {"description": "Authentication data returned"},
         403: {"description": "Forbidden (invalid internal token)"},
@@ -128,17 +127,14 @@ async def update_me(
 
     except EmailAlreadyExists:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail="User with this email already exists",
         )
 
-    except Exception as e:
-        logger.error(
-            f"[update_me FAILED] user_id={user_id} error={e}"
-        )
+    except UserNotFound:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Update user failed",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
         )
 
 
@@ -239,9 +235,9 @@ async def get_user(
 
 @router.get("/internal/batch")
 async def get_users_batch(
-    ids: List[UUID] | UUID = Query(...),
-    _=Depends(verify_internal),
-    service: UserService = Depends(get_user_service),
+        ids: List[UUID] | UUID = Query(...),
+        _=Depends(verify_internal),
+        service: UserService = Depends(get_user_service),
 ):
     """
     Returns users by list of IDs.

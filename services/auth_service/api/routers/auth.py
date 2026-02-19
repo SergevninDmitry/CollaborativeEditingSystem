@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from shared.common.schemas.auth import LoginRequest, TokenResponse
 from application.services.auth_service import AuthService, InvalidCredentials
 import logging
-
+from dependencies import get_auth_service
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Auth"])
@@ -28,16 +28,18 @@ in all protected endpoints.
     },
     tags=["Auth"],
 )
-async def login(data: LoginRequest):
+async def login(
+        data: LoginRequest,
+        auth_service: AuthService = Depends(get_auth_service)
+):
     """
     User login endpoint.
     """
-    service = AuthService()
 
     logger.debug(f"Authenticating user with email: {data.email}")
 
     try:
-        token = await service.authenticate(
+        token = await auth_service.authenticate(
             data.email,
             data.password,
         )

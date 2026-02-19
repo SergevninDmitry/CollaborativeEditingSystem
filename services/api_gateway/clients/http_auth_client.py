@@ -13,3 +13,6 @@ class AuthClient:
         response = await self.client.post("/auth/login", json=credentials)
         logger.info(f"AuthClient login r={response}")
         return response
+
+    async def close(self):
+        await self.client.aclose()

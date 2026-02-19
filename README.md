@@ -14,7 +14,7 @@ The project demonstrates a production-style backend architecture using service s
 
 ---
 
-## 🏗 Architecture Overview
+## Architecture Overview
 
 The system is built using a microservice architecture with a centralized API Gateway:
 
@@ -34,8 +34,8 @@ The system is built using a microservice architecture with a centralized API Gat
 +---------------+  +---------------+  +---------------+  +---------------+
 | Auth Service  |  | User Service  |  | Document Svc  |  |  Version Svc  |
 +-------+-------+  +-------+-------+  +-------+-------+  +-------+-------+
-        \               |                  |               /
-         \              |                  |              /
+        \                  |                  |               /
+         \                 |                  |              /
           +------------------------------------------------+
                               |
                               v
@@ -78,7 +78,7 @@ The system is built using a microservice architecture with a centralized API Gat
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 ```
 services/
 │
@@ -111,31 +111,70 @@ Each service is independently deployable and communicates via HTTP APIs.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### 1️⃣ Clone repository
+### Clone repository
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/SergevninDmitry/CollaborativeEditingSystem.git
 cd CollaborativeEditingSystem
 ```
-### 2️⃣ Create environment file
+### Create environment file
 ```bash
 cp .env.example .env
 ```
 
-### 3️⃣ To run containers in background
+### To run containers in background
 ```bash
 docker compose up --build
 ```
 
-### 4️⃣ Open applications
+### Open applications
 | Service | URL |
 |---|---|
 | API Gateway | http://localhost:8080/docs |
 | Streamlit UI | http://localhost:8501 |
 
-## 🔐 Authentication Flow
+
+---
+
+## Running Tests
+
+The project contains a full testing setup covering:
+
+-  **Unit tests** — business logic validation
+-  **Integration tests** — API + database behavior
+-  **Contract tests** — inter-service HTTP communication
+
+Each microservice is tested independently while also supporting
+running the entire test suite from the project root.
+
+---
+
+## Run All Tests
+
+From project root using helper script:
+
+### Linux / macOS
+
+```bash
+bash run_tests.sh
+```
+### Windows
+```bash
+.\run_tests.ps1
+```
+
+### Test Environment
+
+- Tests use:
+  - in-memory SQLite database (sqlite+aiosqlite:///:memory:)
+  - dependency overrides (FastAPI DI)
+  - fake HTTP clients for external services
+  - respx for HTTP mocking
+
+No Docker containers are required to run tests.
+## Authentication Flow
 
 1. User registers via User Service
 2. Login request goes through API Gateway
@@ -144,7 +183,7 @@ docker compose up --build
 5. The token must be included in the `Authorization: Bearer <token>` header for protected endpoints.
 
 
-## 📄 Document Workflow
+## Document Workflow
 
 - Users create documents
 - Documents belong to an owner
@@ -155,7 +194,7 @@ docker compose up --build
   - revert
   - diff comparison
 
-## 🔁 Versioning Logic
+## Versioning Logic
 
 - The Version Service provides:
   - optimistic concurrency control
@@ -164,7 +203,7 @@ docker compose up --build
   - revert-to-version functionality
 
 
-## 📈 Future Improvements
+## Future Improvements
 
 - WebSocket real-time editing
 - Operational Transform / CRDT
@@ -172,7 +211,7 @@ docker compose up --build
 - Background workers
 - Kubernetes deployment
 
-## 🎯 Educational Goals
+## Educational Goals
 
 This project demonstrates:
 - microservice architecture design
@@ -182,7 +221,7 @@ This project demonstrates:
 - service isolation
 - production-style Docker setup
 
-## 👤 Author
+## Author
 
 **Sergevnin Dmitrii**  
 GitHub: [@SergevninDmitry](https://github.com/SergevninDmitry)

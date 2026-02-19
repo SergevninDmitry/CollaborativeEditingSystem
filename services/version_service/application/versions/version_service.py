@@ -28,11 +28,22 @@ class DocumentVersionService:
         user_id: UUID,
         base_version_id: UUID | None,
     ):
-
-        latest = await self.get_latest_version(document_id)
-
         if base_version_id is not None:
-            if latest and latest.id != base_version_id:
+            latest_id_stmt = (
+                select(DocumentVersion.id)
+                .where(DocumentVersion.document_id == document_id)
+                .order_by(
+                    desc(DocumentVersion.created_at),
+                    desc(DocumentVersion.id),
+                )
+                .limit(1)
+                .with_for_update()
+            )
+
+            result = await self.db.execute(latest_id_stmt)
+            latest_id = result.scalar_one_or_none()
+
+            if latest_id != base_version_id:
                 raise VersionConflict()
 
         version = DocumentVersion(
@@ -52,7 +63,7 @@ class DocumentVersionService:
         result = await self.db.execute(
             select(DocumentVersion)
             .where(DocumentVersion.document_id == document_id)
-            .order_by(desc(DocumentVersion.created_at))
+            .order_by(desc(DocumentVersion.created_at), desc(DocumentVersion.id))
             .limit(limit)
         )
 
@@ -83,7 +94,7 @@ class DocumentVersionService:
         result = await self.db.execute(
             select(DocumentVersion)
             .where(DocumentVersion.document_id == document_id)
-            .order_by(desc(DocumentVersion.created_at))
+            .order_by(desc(DocumentVersion.created_at), desc(DocumentVersion.id))
             .limit(1)
         )
 
@@ -131,7 +142,7 @@ class DocumentVersionService:
         result = await self.db.execute(
             select(DocumentVersion)
             .where(DocumentVersion.document_id == document_id)
-            .order_by(desc(DocumentVersion.created_at))
+            .order_by(desc(DocumentVersion.created_at), desc(DocumentVersion.id))
         )
 
         versions = result.scalars().all()

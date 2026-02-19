@@ -4,8 +4,13 @@ from jose import jwt, JWTError
 from uuid import UUID
 from infrastructure.clients.http_user_client import HttpUserClient
 from config import settings
+from application.services.auth_service import AuthService
 
 security = HTTPBearer()
+
+
+async def get_auth_service() -> AuthService:
+    return AuthService()
 
 
 async def get_current_user(

@@ -11,7 +11,10 @@ documents = api_client.get_documents()
 doc_titles = [doc["title"] for doc in documents]
 doc_map = {doc["title"]: doc for doc in documents}
 if "selected_document_title" not in st.session_state:
-    st.session_state.selected_document_title = doc_titles[0]
+    if len(doc_titles) > 0:
+        st.session_state.selected_document_title = doc_titles[0]
+    else:
+        st.session_state.selected_document_title = None
 
 st.subheader("Create New Document")
 
@@ -55,7 +58,7 @@ else:
 if "selected_document_id" in st.session_state:
 
     st.subheader("Share Document")
-    st.markdown(f"##### Share Document {st.session_state.selected_document_title} with user:")
+    st.markdown(f"##### Share **{st.session_state.selected_document_title}** with another user:")
     share_email = st.text_input("User email to share with")
 
     if st.button("Share"):
