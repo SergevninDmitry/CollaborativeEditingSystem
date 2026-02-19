@@ -1,0 +1,4 @@
+pytest services/auth_service
+pytest services/user_service
+pytest services/document_service
+pytest services/version_service
